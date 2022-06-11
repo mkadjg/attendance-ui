@@ -74,6 +74,7 @@ import { Formik } from 'formik';
 import * as Yup from 'yup';
 import 'yup-phone';
 import AnimateButton from 'ui-component/extended/AnimateButton';
+import { SignalWifiStatusbarNullSharp } from '@mui/icons-material';
 
 // styles
 const OutlineInputStyle = styled(OutlinedInput, { shouldForwardProp })(({ theme }) => ({
@@ -134,6 +135,7 @@ const Employee = () => {
     const [responseMessage, setResponseMessage] = useState('');
     const [responseStatus, setResponseStatus] = useState('success');
     const [disableSubmit, setDisableSubmit] = useState(false);
+    const [employeePhoto, setEmployeePhoto] = useState({ raw: '', preview: '' });
     const theme = useTheme();
 
     const getListData = () => {
@@ -162,6 +164,20 @@ const Employee = () => {
             });
     };
 
+    const handleChangePhoto = (event) => {
+        if (event.target.files.length > 0) {
+            setEmployeePhoto({
+                raw: event.target.files[0],
+                preview: URL.createObjectURL(event.target.files[0])
+            });
+        } else {
+            setEmployeePhoto({
+                raw: null,
+                preview: null
+            });
+        }
+    };
+
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
     };
@@ -183,17 +199,29 @@ const Employee = () => {
 
     const handleCreateClose = () => {
         setItem({});
+        setEmployeePhoto({
+            raw: null,
+            preview: null
+        });
         setCreateOpen(false);
     };
 
     const handleEditOpen = (row) => {
         getDivisionListData();
         setItem(row);
+        setEmployeePhoto({
+            raw: row.employeePhoto,
+            preview: `data:image/jpeg;image/png;image/jpg;base64,${row.employeePhoto}`
+        });
         setEditOpen(true);
     };
 
     const handleEditClose = () => {
         setItem({});
+        setEmployeePhoto({
+            raw: null,
+            preview: null
+        });
         setEditOpen(false);
     };
 
@@ -205,6 +233,36 @@ const Employee = () => {
     const handleDeleteClose = () => {
         setItem({});
         setDeleteOpen(false);
+    };
+
+    const deActivateEmployee = () => {
+        axios
+            .delete(`${config.baseUrl}auth/employee/delete/${item.employeeId}`, {
+                headers: { Authorization: `Bearer ${cookies.auth.token}` }
+            })
+            .then((response) => {
+                if (response.status) {
+                    setResponseStatus(response.data.status);
+                    setResponseMessage(response.data.message);
+                    setSnackbarOpen(true);
+                    handleDeleteClose();
+                    getListData();
+                    setDisableSubmit(false);
+                } else {
+                    setResponseStatus('error');
+                    setResponseMessage('Oops Internal Server Error!');
+                    setSnackbarOpen(true);
+                    handleDeleteClose();
+                    setDisableSubmit(false);
+                }
+            })
+            .catch((error) => {
+                setResponseStatus('error');
+                setResponseMessage('Oops Internal Server Error!');
+                setSnackbarOpen(true);
+                handleDeleteClose();
+                setDisableSubmit(false);
+            });
     };
 
     useEffect(() => {
@@ -340,18 +398,33 @@ const Employee = () => {
                 <MainCard sx={modalStyle}>
                     <Grid container>
                         <Grid item xs={2}>
-                            <Avatar
-                                src={User1}
-                                sx={{
-                                    ...theme.typography.largeAvatar,
-                                    margin: '8px 0 8px 8px !important',
-                                    cursor: 'pointer',
-                                    height: '80px',
-                                    width: '80px'
-                                }}
-                                aria-haspopup="true"
-                                color="inherit"
-                            />
+                            {item.employeePhoto ? (
+                                <Avatar
+                                    src={`data:image/jpeg;image/png;image/jpg;base64,${item.employeePhoto}`}
+                                    sx={{
+                                        ...theme.typography.largeAvatar,
+                                        margin: '8px 0 8px 8px !important',
+                                        cursor: 'pointer',
+                                        height: '80px',
+                                        width: '80px'
+                                    }}
+                                    aria-haspopup="true"
+                                    color="inherit"
+                                />
+                            ) : (
+                                <Avatar
+                                    src={null}
+                                    sx={{
+                                        ...theme.typography.largeAvatar,
+                                        margin: '8px 0 8px 8px !important',
+                                        cursor: 'pointer',
+                                        height: '80px',
+                                        width: '80px'
+                                    }}
+                                    aria-haspopup="true"
+                                    color="inherit"
+                                />
+                            )}
                         </Grid>
                         <Grid item xs={8}>
                             <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
@@ -510,7 +583,7 @@ const Employee = () => {
                                     employeeGender: values.employeeGender,
                                     employeeEmail: values.employeeEmail,
                                     employeePhoneNumber: values.employeePhoneNumber,
-                                    isSupervisor: values.isSupervisor,
+                                    isSupervisor: values.isSupervisor ? 1 : 0,
                                     divisionId: values.divisionId
                                 };
                                 axios
@@ -519,6 +592,21 @@ const Employee = () => {
                                     })
                                     .then((response) => {
                                         if (response.status) {
+                                            if (response.status === 200) {
+                                                const employeeId = response.data?.data?.employeeId;
+                                                const bodyPhoto = new FormData();
+                                                bodyPhoto.append('photo', employeePhoto.raw);
+                                                axios
+                                                    .post(`${config.baseUrl}absence/employee/upload-photo/${employeeId}`, bodyPhoto, {
+                                                        headers: {
+                                                            Authorization: `Bearer ${cookies.auth.token}`,
+                                                            'user-audit-id': userAuditId
+                                                        }
+                                                    })
+                                                    .then((response) => {
+                                                        console.log(response);
+                                                    });
+                                            }
                                             setResponseStatus(response.data.status);
                                             setResponseMessage(response.data.message);
                                             setSnackbarOpen(true);
@@ -751,25 +839,46 @@ const Employee = () => {
                                             style={{ marginBottom: 18 }}
                                         >
                                             <FormLabel htmlFor="employee-photo">Photo*</FormLabel>
-                                            <TextField id="employee-photo" type="file" name="employeePhoto" inputProps={{}} />
+                                            <TextField
+                                                id="employee-photo"
+                                                type="file"
+                                                name="employeePhoto"
+                                                inputProps={{}}
+                                                onChange={handleChangePhoto}
+                                            />
                                             {touched.employeePhoto && errors.employeePhoto && (
                                                 <FormHelperText error id="standard-weight-helper-text-employee-photo">
                                                     {errors.employeePhoto}
                                                 </FormHelperText>
                                             )}
                                         </FormControl>
-                                        <Avatar
-                                            src={User1}
-                                            sx={{
-                                                ...theme.typography.largeAvatar,
-                                                margin: '8px 0 8px 8px !important',
-                                                cursor: 'pointer',
-                                                height: '80px',
-                                                width: '80px'
-                                            }}
-                                            aria-haspopup="true"
-                                            color="inherit"
-                                        />
+                                        {employeePhoto.preview ? (
+                                            <Avatar
+                                                src={employeePhoto.preview}
+                                                sx={{
+                                                    ...theme.typography.largeAvatar,
+                                                    margin: '8px 0 8px 8px !important',
+                                                    cursor: 'pointer',
+                                                    height: '80px',
+                                                    width: '80px'
+                                                }}
+                                                aria-haspopup="true"
+                                                color="inherit"
+                                            />
+                                        ) : (
+                                            <Avatar
+                                                src={null}
+                                                sx={{
+                                                    ...theme.typography.largeAvatar,
+                                                    margin: '8px 0 8px 8px !important',
+                                                    cursor: 'pointer',
+                                                    height: '80px',
+                                                    width: '80px'
+                                                }}
+                                                aria-haspopup="true"
+                                                color="inherit"
+                                            />
+                                        )}
                                         {errors.submit && (
                                             <Box sx={{ mt: 3 }}>
                                                 <FormHelperText error>{errors.submit}</FormHelperText>
@@ -777,7 +886,6 @@ const Employee = () => {
                                         )}
                                     </Grid>
                                 </Grid>
-
                                 <Box sx={{ mt: 2 }}>
                                     <AnimateButton>
                                         <Button
@@ -853,6 +961,21 @@ const Employee = () => {
                                     })
                                     .then((response) => {
                                         if (response.status) {
+                                            if (response.status === 200) {
+                                                const employeeId = response.data?.data?.employeeId;
+                                                const bodyPhoto = new FormData();
+                                                bodyPhoto.append('photo', employeePhoto.raw);
+                                                axios
+                                                    .post(`${config.baseUrl}absence/employee/upload-photo/${employeeId}`, bodyPhoto, {
+                                                        headers: {
+                                                            Authorization: `Bearer ${cookies.auth.token}`,
+                                                            'user-audit-id': userAuditId
+                                                        }
+                                                    })
+                                                    .then((response) => {
+                                                        console.log(response);
+                                                    });
+                                            }
                                             setResponseStatus(response.data.status);
                                             setResponseMessage(response.data.message);
                                             setSnackbarOpen(true);
@@ -1087,18 +1210,33 @@ const Employee = () => {
                                                 </FormHelperText>
                                             )}
                                         </FormControl>
-                                        <Avatar
-                                            src={User1}
-                                            sx={{
-                                                ...theme.typography.largeAvatar,
-                                                margin: '8px 0 8px 8px !important',
-                                                cursor: 'pointer',
-                                                height: '80px',
-                                                width: '80px'
-                                            }}
-                                            aria-haspopup="true"
-                                            color="inherit"
-                                        />
+                                        {employeePhoto.preview ? (
+                                            <Avatar
+                                                src={employeePhoto.preview}
+                                                sx={{
+                                                    ...theme.typography.largeAvatar,
+                                                    margin: '8px 0 8px 8px !important',
+                                                    cursor: 'pointer',
+                                                    height: '80px',
+                                                    width: '80px'
+                                                }}
+                                                aria-haspopup="true"
+                                                color="inherit"
+                                            />
+                                        ) : (
+                                            <Avatar
+                                                src={SignalWifiStatusbarNullSharp}
+                                                sx={{
+                                                    ...theme.typography.largeAvatar,
+                                                    margin: '8px 0 8px 8px !important',
+                                                    cursor: 'pointer',
+                                                    height: '80px',
+                                                    width: '80px'
+                                                }}
+                                                aria-haspopup="true"
+                                                color="inherit"
+                                            />
+                                        )}
                                         {errors.submit && (
                                             <Box sx={{ mt: 3 }}>
                                                 <FormHelperText error>{errors.submit}</FormHelperText>
@@ -1143,7 +1281,7 @@ const Employee = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleDeleteClose}>No</Button>
-                    <Button onClick={handleDeleteClose} autoFocus>
+                    <Button onClick={deActivateEmployee} autoFocus>
                         Yes
                     </Button>
                 </DialogActions>

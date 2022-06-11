@@ -118,7 +118,7 @@ const modalStyle = {
     overflowY: 'scroll'
 };
 
-const LeaveType = () => {
+const LeaveSubmission = () => {
     const [cookies, setCookie] = useCookies(['user']);
     const [data, setData] = useState([]);
     const [detailOpen, setDetailOpen] = useState(Boolean);
@@ -743,4 +743,4 @@ const LeaveType = () => {
     );
 };
 
-export default LeaveType;
+export default LeaveSubmission;

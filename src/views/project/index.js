@@ -118,7 +118,7 @@ const modalStyle = {
     overflowY: 'scroll'
 };
 
-const LeaveType = () => {
+const Project = () => {
     const [cookies, setCookie] = useCookies(['user']);
     const [data, setData] = useState([]);
     const [detailOpen, setDetailOpen] = useState(Boolean);
@@ -131,17 +131,31 @@ const LeaveType = () => {
     const [responseMessage, setResponseMessage] = useState('');
     const [responseStatus, setResponseStatus] = useState('success');
     const [disableSubmit, setDisableSubmit] = useState(false);
+    const [division, setDivision] = useState([]);
     const theme = useTheme();
 
     const getListData = () => {
         axios
-            .get(`${config.baseUrl}absence/leave-type/find-all`, { headers: { Authorization: `Bearer ${cookies.auth.token}` } })
+            .get(`${config.baseUrl}absence/project/find-all`, { headers: { Authorization: `Bearer ${cookies.auth.token}` } })
             .catch((error) => {
                 console.log(error);
             })
             .then((response) => {
                 if (response.status === 200) {
                     setData(response.data.data);
+                }
+            });
+    };
+
+    const getDivisionListData = () => {
+        axios
+            .get(`${config.baseUrl}absence/division/find-all`, { headers: { Authorization: `Bearer ${cookies.auth.token}` } })
+            .catch((error) => {
+                console.log(error);
+            })
+            .then((response) => {
+                if (response.status === 200) {
+                    setDivision(response.data.data);
                 }
             });
     };
@@ -161,6 +175,7 @@ const LeaveType = () => {
     };
 
     const handleCreateOpen = () => {
+        getDivisionListData();
         setCreateOpen(true);
     };
 
@@ -170,6 +185,7 @@ const LeaveType = () => {
     };
 
     const handleEditOpen = (row) => {
+        getDivisionListData();
         setItem(row);
         setEditOpen(true);
     };
@@ -189,9 +205,9 @@ const LeaveType = () => {
         setDeleteOpen(false);
     };
 
-    const deleteLeaveType = () => {
+    const deleteProject = () => {
         axios
-            .delete(`${config.baseUrl}absence/leave-type/delete/${item.leaveTypeId}`, {
+            .delete(`${config.baseUrl}absence/project/delete/${item.projectId}`, {
                 headers: { Authorization: `Bearer ${cookies.auth.token}` }
             })
             .then((response) => {
@@ -313,16 +329,16 @@ const LeaveType = () => {
 
     const columns = [
         {
-            name: 'Leave Type Name',
-            selector: (row) => row.leaveTypeName
+            name: 'Project Name',
+            selector: (row) => row.projectName
         },
         {
             name: 'Description',
-            selector: (row) => row.leaveTypeDesc
+            selector: (row) => row.projectDesc
         },
         {
-            name: 'Total Days Off',
-            selector: (row) => row.defaultValue
+            name: 'Division',
+            selector: (row) => row.division?.divisionName
         },
         {
             name: 'Action',
@@ -332,7 +348,7 @@ const LeaveType = () => {
     ];
 
     return (
-        <MainCard title="Leave Type" secondary={<SearchSection />}>
+        <MainCard title="Project" secondary={<SearchSection />}>
             <DataTable columns={columns} data={data} responsive="true" pagination />
             <Modal
                 id="detail"
@@ -349,7 +365,7 @@ const LeaveType = () => {
                                     <ListItemText
                                         primary={
                                             <Typography variant="subtitle1" fontSize={18}>
-                                                Leave Type Detail
+                                                Division Detail
                                             </Typography>
                                         }
                                     />
@@ -363,26 +379,23 @@ const LeaveType = () => {
                             <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
                                 <ListItem>
                                     <ListItemAvatar>
-                                        <Avatar>
+                                        <IconButton color="secondary" size="medium" disableRipple style={{ backgroundColor: '#EDE7F6' }}>
                                             <IconId />
-                                        </Avatar>
+                                        </IconButton>
                                     </ListItemAvatar>
-                                    <ListItemText
-                                        primary="Leave Type Name"
-                                        secondary={item.leaveTypeName === null ? '-' : item.leaveTypeName}
-                                    />
+                                    <ListItemText primary="Division Name" secondary={item.projectName === null ? '-' : item.projectName} />
                                 </ListItem>
                             </List>
                             <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
                                 <ListItem>
                                     <ListItemAvatar>
-                                        <Avatar>
-                                            <IconCalendar />
-                                        </Avatar>
+                                        <IconButton color="secondary" size="medium" disableRipple style={{ backgroundColor: '#EDE7F6' }}>
+                                            <IconBuildingSkyscraper />
+                                        </IconButton>
                                     </ListItemAvatar>
                                     <ListItemText
-                                        primary="Total Days Off"
-                                        secondary={item.defaultValue === null ? '-' : item.defaultValue}
+                                        primary="Division"
+                                        secondary={item.division?.divisionName === null ? '-' : item.division?.divisionName}
                                     />
                                 </ListItem>
                             </List>
@@ -391,14 +404,11 @@ const LeaveType = () => {
                             <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
                                 <ListItem>
                                     <ListItemAvatar>
-                                        <Avatar>
+                                        <IconButton color="secondary" size="medium" disableRipple style={{ backgroundColor: '#EDE7F6' }}>
                                             <IconNotes />
-                                        </Avatar>
+                                        </IconButton>
                                     </ListItemAvatar>
-                                    <ListItemText
-                                        primary="Description"
-                                        secondary={item.leaveTypeDesc === null ? '-' : item.leaveTypeDesc}
-                                    />
+                                    <ListItemText primary="Description" secondary={item.projectDesc === null ? '-' : item.projectDesc} />
                                 </ListItem>
                             </List>
                         </Grid>
@@ -412,27 +422,27 @@ const LeaveType = () => {
                 aria-labelledby="parent-modal-title"
                 aria-describedby="parent-modal-description"
             >
-                <MainCard sx={modalStyle} title="Add New Leave Type">
+                <MainCard sx={modalStyle} title="Add New Division">
                     <Formik
                         initialValues={{
-                            leaveTypeName: '',
-                            leaveTypeDesc: '',
-                            defaultValue: 0
+                            projectName: '',
+                            projectDesc: '',
+                            divisionId: 0
                         }}
                         validationSchema={Yup.object().shape({
-                            leaveTypeName: Yup.string().max(255).required('Leave Type Name is required'),
-                            defaultValue: Yup.number().max(60).required('Total Days Off is required')
+                            projectName: Yup.string().max(255).required('Project Name is required'),
+                            divisionId: Yup.string().max(255).required('Division Off is required')
                         })}
                         onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
                             try {
                                 setDisableSubmit(true);
                                 const body = {
-                                    leaveTypeName: values.leaveTypeName,
-                                    leaveTypeDesc: values.leaveTypeDesc,
-                                    defaultValue: values.defaultValue
+                                    projectName: values.projectName,
+                                    projectDesc: values.projectDesc,
+                                    divisionId: values.divisionId
                                 };
                                 axios
-                                    .post(`${config.baseUrl}absence/leave-type/create`, body, {
+                                    .post(`${config.baseUrl}absence/project/create`, body, {
                                         headers: { Authorization: `Bearer ${cookies.auth.token}`, 'user-audit-id': userAuditId }
                                     })
                                     .then((response) => {
@@ -465,43 +475,49 @@ const LeaveType = () => {
                                     <Grid item xs={6}>
                                         <FormControl
                                             fullWidth
-                                            error={Boolean(touched.leaveTypeName && errors.leaveTypeName)}
+                                            error={Boolean(touched.projectName && errors.projectName)}
                                             style={{ marginBottom: 18 }}
                                         >
                                             <TextField
-                                                id="leave-type-name"
+                                                id="project-name"
                                                 type="text"
-                                                value={values.leaveTypeName}
-                                                name="leaveTypeName"
+                                                value={values.projectName}
+                                                name="projectName"
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
-                                                label="Leave Type Name*"
+                                                label="Project Name*"
                                                 inputProps={{}}
                                             />
-                                            {touched.leaveTypeName && errors.leaveTypeName && (
-                                                <FormHelperText error id="standard-weight-helper-text-leaveType-name">
-                                                    {errors.leaveTypeName}
+                                            {touched.projectName && errors.projectName && (
+                                                <FormHelperText error id="standard-weight-helper-text-project-name">
+                                                    {errors.projectName}
                                                 </FormHelperText>
                                             )}
                                         </FormControl>
                                         <FormControl
                                             fullWidth
-                                            error={Boolean(touched.defaultValue && errors.defaultValue)}
+                                            error={Boolean(touched.divisionId && errors.divisionId)}
                                             style={{ marginBottom: 18 }}
                                         >
-                                            <TextField
-                                                id="default-value"
-                                                type="number"
-                                                value={values.defaultValue}
-                                                name="defaultValue"
+                                            <InputLabel htmlFor="division-id">Division*</InputLabel>
+                                            <Select
+                                                id="division-id"
+                                                value={values.divisionId}
+                                                name="divisionId"
+                                                label="Division*"
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
-                                                label="Total Days Off*"
                                                 inputProps={{}}
-                                            />
-                                            {touched.defaultValue && errors.defaultValue && (
-                                                <FormHelperText error id="standard-weight-helper-text-default-value">
-                                                    {errors.defaultValue}
+                                            >
+                                                {division.map((item, index) => (
+                                                    <MenuItem id={`create${index}`} value={item.divisionId}>
+                                                        {item.divisionName}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                            {touched.divisionId && errors.divisionId && (
+                                                <FormHelperText error id="standard-weight-helper-text-division-id">
+                                                    {errors.divisionId}
                                                 </FormHelperText>
                                             )}
                                         </FormControl>
@@ -509,24 +525,24 @@ const LeaveType = () => {
                                     <Grid item xs={6}>
                                         <FormControl
                                             fullWidth
-                                            error={Boolean(touched.leaveTypeDesc && errors.leaveTypeDesc)}
+                                            error={Boolean(touched.projectDesc && errors.projectDesc)}
                                             style={{ marginBottom: 18 }}
                                         >
                                             <TextField
-                                                id="leave-type-desc"
-                                                value={values.leaveTypeDesc}
+                                                id="project-desc"
+                                                value={values.projectDesc}
                                                 type="text"
-                                                name="leaveTypeDesc"
-                                                label="Leave Type Desc"
+                                                name="projectDesc"
+                                                label="Project Desc"
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
                                                 inputProps={{}}
                                                 multiline
-                                                rows={3}
+                                                rows={4}
                                             />
-                                            {touched.leaveTypeDesc && errors.leaveTypeDesc && (
-                                                <FormHelperText error id="standard-weight-helper-text-leaveType-desc">
-                                                    {errors.leaveTypeDesc}
+                                            {touched.projectDesc && errors.projectDesc && (
+                                                <FormHelperText error id="standard-weight-helper-text-project-desc">
+                                                    {errors.projectDesc}
                                                 </FormHelperText>
                                             )}
                                         </FormControl>
@@ -565,23 +581,28 @@ const LeaveType = () => {
                 aria-labelledby="parent-modal-title"
                 aria-describedby="parent-modal-description"
             >
-                <MainCard sx={modalStyle} title="Edit Data Leave Type">
+                <MainCard sx={modalStyle} title="Edit Data Division">
                     <Formik
-                        initialValues={item}
+                        initialValues={{
+                            projectId: item.projectId,
+                            projectName: item.projectName,
+                            projectDesc: item.projectDesc,
+                            divisionId: item.division?.divisionId
+                        }}
                         validationSchema={Yup.object().shape({
-                            leaveTypeName: Yup.string().max(255).required('Leave Type Name is required'),
-                            defaultValue: Yup.number().max(60).required('Total Days Off is required')
+                            projectName: Yup.string().max(255).required('Project Name is required'),
+                            divisionId: Yup.string().max(255).required('Division is required')
                         })}
                         onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
                             try {
                                 setDisableSubmit(true);
                                 const body = {
-                                    leaveTypeName: values.leaveTypeName,
-                                    leaveTypeDesc: values.leaveTypeDesc,
-                                    defaultValue: values.defaultValue
+                                    projectName: values.projectName,
+                                    projectDesc: values.projectDesc,
+                                    divisionId: values.divisionId
                                 };
                                 axios
-                                    .put(`${config.baseUrl}absence/leave-type/update/${item.leaveTypeId}`, body, {
+                                    .put(`${config.baseUrl}absence/project/update/${item.projectId}`, body, {
                                         headers: { Authorization: `Bearer ${cookies.auth.token}`, 'user-audit-id': userAuditId }
                                     })
                                     .then((response) => {
@@ -614,43 +635,49 @@ const LeaveType = () => {
                                     <Grid item xs={6}>
                                         <FormControl
                                             fullWidth
-                                            error={Boolean(touched.leaveTypeName && errors.leaveTypeName)}
+                                            error={Boolean(touched.projectName && errors.projectName)}
                                             style={{ marginBottom: 18 }}
                                         >
                                             <TextField
-                                                id="leaveType-name"
+                                                id="project-name"
                                                 type="text"
-                                                value={values.leaveTypeName}
-                                                name="divisioName"
+                                                value={values.projectName}
+                                                name="projectName"
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
-                                                label="Leave Type Name*"
+                                                label="Project Name*"
                                                 inputProps={{}}
                                             />
-                                            {touched.leaveTypeName && errors.leaveTypeName && (
-                                                <FormHelperText error id="standard-weight-helper-text-leaveType-name">
-                                                    {errors.leaveTypeName}
+                                            {touched.projectName && errors.projectName && (
+                                                <FormHelperText error id="standard-weight-helper-text-project-name">
+                                                    {errors.projectName}
                                                 </FormHelperText>
                                             )}
                                         </FormControl>
                                         <FormControl
                                             fullWidth
-                                            error={Boolean(touched.defaultValue && errors.defaultValue)}
+                                            error={Boolean(touched.divisionId && errors.divisionId)}
                                             style={{ marginBottom: 18 }}
                                         >
-                                            <TextField
-                                                id="default-value"
-                                                type="number"
-                                                value={values.defaultValue}
-                                                name="defaultValue"
+                                            <InputLabel htmlFor="division-id">Division*</InputLabel>
+                                            <Select
+                                                id="division-id"
+                                                value={values.divisionId}
+                                                name="divisionId"
+                                                label="Division*"
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
-                                                label="Total Days Off*"
                                                 inputProps={{}}
-                                            />
-                                            {touched.defaultValue && errors.defaultValue && (
-                                                <FormHelperText error id="standard-weight-helper-text-default-value">
-                                                    {errors.defaultValue}
+                                            >
+                                                {division.map((item, index) => (
+                                                    <MenuItem id={`create${index}`} value={item.divisionId}>
+                                                        {item.divisionName}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                            {touched.divisionId && errors.divisionId && (
+                                                <FormHelperText error id="standard-weight-helper-text-division-id">
+                                                    {errors.divisionId}
                                                 </FormHelperText>
                                             )}
                                         </FormControl>
@@ -658,24 +685,24 @@ const LeaveType = () => {
                                     <Grid item xs={6}>
                                         <FormControl
                                             fullWidth
-                                            error={Boolean(touched.leaveTypeDesc && errors.leaveTypeDesc)}
+                                            error={Boolean(touched.projectDesc && errors.projectDesc)}
                                             style={{ marginBottom: 18 }}
                                         >
                                             <TextField
-                                                id="leaveType-desc"
-                                                value={values.leaveTypeDesc}
+                                                id="project-desc"
+                                                value={values.projectDesc}
                                                 type="text"
-                                                name="leaveTypeDesc"
-                                                label="Leave Type Desc"
+                                                name="projectDesc"
+                                                label="Project Desc"
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
                                                 inputProps={{}}
                                                 multiline
-                                                rows={3}
+                                                rows={4}
                                             />
-                                            {touched.leaveTypeDesc && errors.leaveTypeDesc && (
-                                                <FormHelperText error id="standard-weight-helper-text-leaveType-desc">
-                                                    {errors.leaveTypeDesc}
+                                            {touched.projectDesc && errors.projectDesc && (
+                                                <FormHelperText error id="standard-weight-helper-text-project-desc">
+                                                    {errors.projectDesc}
                                                 </FormHelperText>
                                             )}
                                         </FormControl>
@@ -714,16 +741,16 @@ const LeaveType = () => {
                 aria-describedby="alert-dialog-description"
             >
                 <DialogTitle fontSize={16} id="alert-dialog-title">
-                    Delete Leave Type Confirmation
+                    Delete Division Confirmation
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText id="alert-dialog-description">
-                        {`Are you sure want to delete ${item.leaveTypeName} leave type ?`}
+                        {`Are you sure want to delete ${item.projectName} project ?`}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleDeleteClose}>No</Button>
-                    <Button onClick={deleteLeaveType} autoFocus>
+                    <Button onClick={deleteProject} autoFocus>
                         Yes
                     </Button>
                 </DialogActions>
@@ -743,4 +770,4 @@ const LeaveType = () => {
     );
 };
 
-export default LeaveType;
+export default Project;

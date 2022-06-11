@@ -38,7 +38,7 @@ const FirebaseLogin = ({ ...others }) => {
     const theme = useTheme();
     const scriptedRef = useScriptRef();
     const navigate = useNavigate();
-    const [cookies, setCookie] = useCookies(['user']);
+    const [cookies, setCookie] = useCookies();
 
     const [showPassword, setShowPassword] = useState(false);
     const handleClickShowPassword = () => {
@@ -76,6 +76,8 @@ const FirebaseLogin = ({ ...others }) => {
                             .then((response) => {
                                 if (response.status === 200) {
                                     setCookie('auth', response.data.data);
+                                    setCookie('role', response.data.data.roleName[0]);
+                                    setCookie('division', response.data.data.division);
                                     navigate('/dashboard');
                                 }
                             });

@@ -8,21 +8,23 @@ import Login from 'views/pages/authentication/authentication3/Login3';
 // dashboard routing
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
 
-// utilities routing
-const UtilsTypography = Loadable(lazy(() => import('views/utilities/Typography')));
-const UtilsColor = Loadable(lazy(() => import('views/utilities/Color')));
-const UtilsShadow = Loadable(lazy(() => import('views/utilities/Shadow')));
-const UtilsMaterialIcons = Loadable(lazy(() => import('views/utilities/MaterialIcons')));
-const UtilsTablerIcons = Loadable(lazy(() => import('views/utilities/TablerIcons')));
-
 // master data routing
 const Employee = Loadable(lazy(() => import('views/employee')));
 const Division = Loadable(lazy(() => import('views/division')));
 const Holiday = Loadable(lazy(() => import('views/holiday')));
 const LeaveType = Loadable(lazy(() => import('views/leave-type')));
+const Project = Loadable(lazy(() => import('views/project')));
 
-// sample page routing
-const SamplePage = Loadable(lazy(() => import('views/sample-page')));
+// attendance routing
+const FormPresent = Loadable(lazy(() => import('views/form-present')));
+const FormSick = Loadable(lazy(() => import('views/form-sick')));
+const FormLeave = Loadable(lazy(() => import('views/form-leave')));
+const HistoryPresent = Loadable(lazy(() => import('views/history-present')));
+const HistorySick = Loadable(lazy(() => import('views/history-sick')));
+const HistoryLeave = Loadable(lazy(() => import('views/history-leave')));
+
+// submission routing
+const LeaveSubmission = Loadable(lazy(() => import('views/leave-submission')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -51,12 +53,36 @@ const MainRoutes = {
             element: <LeaveType />
         },
         {
-            path: '/icons/material-icons',
-            element: <UtilsMaterialIcons />
+            path: '/master-data/project',
+            element: <Project />
         },
         {
-            path: '/sample-page',
-            element: <SamplePage />
+            path: '/submission/leave-submission',
+            element: <LeaveSubmission />
+        },
+        {
+            path: '/form-present',
+            element: <FormPresent />
+        },
+        {
+            path: '/form-sick',
+            element: <FormSick />
+        },
+        {
+            path: '/form-leave',
+            element: <FormLeave />
+        },
+        {
+            path: '/history-present',
+            element: <HistoryPresent />
+        },
+        {
+            path: '/history-sick',
+            element: <HistorySick />
+        },
+        {
+            path: '/history-leave',
+            element: <HistoryLeave />
         }
     ]
 };
