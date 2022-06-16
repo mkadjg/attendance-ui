@@ -5,14 +5,18 @@ import { useCookies } from 'react-cookie';
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import {
+    Alert,
     Box,
     Button,
+    CircularProgress,
     FormControl,
     FormHelperText,
     IconButton,
     InputAdornment,
     InputLabel,
     OutlinedInput,
+    Slide,
+    Snackbar,
     Stack,
     Typography
 } from '@mui/material';
@@ -39,14 +43,22 @@ const FirebaseLogin = ({ ...others }) => {
     const scriptedRef = useScriptRef();
     const navigate = useNavigate();
     const [cookies, setCookie] = useCookies();
-
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [responseMessage, setResponseMessage] = useState('');
+    const [responseStatus, setResponseStatus] = useState('success');
     const [showPassword, setShowPassword] = useState(false);
+    const [disableSubmit, setDisableSubmit] = useState(false);
+
     const handleClickShowPassword = () => {
         setShowPassword(!showPassword);
     };
 
     const handleMouseDownPassword = (event) => {
         event.preventDefault();
+    };
+
+    const handleSnackbarClose = () => {
+        setSnackbarOpen(false);
     };
 
     return (
@@ -63,30 +75,51 @@ const FirebaseLogin = ({ ...others }) => {
                 })}
                 onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
                     try {
-                        setSubmitting(true);
+                        setDisableSubmit(true);
                         const body = {
                             username: values.email,
                             password: values.password
                         };
                         axios
                             .post(`${config.baseUrl}auth/user/login`, body)
-                            .catch((error) => {
-                                console.log(error);
-                            })
                             .then((response) => {
-                                if (response.status === 200) {
-                                    setCookie('auth', response.data.data);
-                                    setCookie('role', response.data.data.roleName[0]);
-                                    setCookie('division', response.data.data.division);
-                                    navigate('/dashboard');
+                                setDisableSubmit(false);
+                                if (response.status) {
+                                    if (response.status === 200) {
+                                        setCookie('userId', response.data.data?.userId);
+                                        setCookie('employeeId', response.data.data?.employeeId);
+                                        setCookie('employeeName', response.data.data?.employeeName);
+                                        setCookie('username', response.data.data?.username);
+                                        setCookie('token', response.data.data?.token);
+                                        setCookie('role', response.data.data?.roleName[0]);
+                                        setCookie('roles', response.data.data?.roleName);
+                                        setCookie('jobTitle', response.data.data?.jobTitle);
+                                        setCookie('division', response.data.data?.jobTitle?.division);
+                                        sessionStorage.setItem('photo', response.data?.data?.employeePhoto);
+                                        navigate('/dashboard');
+                                    } else {
+                                        setResponseStatus(response.data.status);
+                                        setResponseMessage(response.data.message);
+                                        setSnackbarOpen(true);
+                                    }
+                                } else {
+                                    setResponseStatus('error');
+                                    setResponseMessage('Oops, Seomething went wrong!');
+                                    setSnackbarOpen(true);
                                 }
+                            })
+                            .catch((error) => {
+                                setDisableSubmit(false);
+                                setResponseStatus(error.response.data.status);
+                                setResponseMessage(error.response.data.message);
+                                setSnackbarOpen(true);
                             });
                         if (scriptedRef.current) {
                             setStatus({ success: true });
                             setSubmitting(false);
                         }
                     } catch (err) {
-                        console.error(err);
+                        setDisableSubmit(false);
                         if (scriptedRef.current) {
                             setStatus({ success: false });
                             setErrors({ submit: err.message });
@@ -166,20 +199,31 @@ const FirebaseLogin = ({ ...others }) => {
                             <AnimateButton>
                                 <Button
                                     disableElevation
-                                    disabled={isSubmitting}
+                                    disabled={disableSubmit}
                                     fullWidth
                                     size="large"
                                     type="submit"
                                     variant="contained"
                                     color="primary"
                                 >
-                                    Sign in
+                                    {disableSubmit ? <CircularProgress size="1.5rem" color="primary" /> : 'Sign in'}
                                 </Button>
                             </AnimateButton>
                         </Box>
                     </form>
                 )}
             </Formik>
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={3000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                TransitionComponent={Slide}
+            >
+                <Alert onClose={handleSnackbarClose} severity={responseStatus} sx={{ width: '100%' }}>
+                    {responseMessage}
+                </Alert>
+            </Snackbar>
         </>
     );
 };

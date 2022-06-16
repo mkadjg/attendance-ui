@@ -21,10 +21,12 @@ const FormSick = Loadable(lazy(() => import('views/form-sick')));
 const FormLeave = Loadable(lazy(() => import('views/form-leave')));
 const HistoryPresent = Loadable(lazy(() => import('views/history-present')));
 const HistorySick = Loadable(lazy(() => import('views/history-sick')));
-const HistoryLeave = Loadable(lazy(() => import('views/history-leave')));
+const Timesheet = Loadable(lazy(() => import('views/timesheet')));
 
 // submission routing
 const LeaveSubmission = Loadable(lazy(() => import('views/leave-submission')));
+const HistoryLeave = Loadable(lazy(() => import('views/history-leave')));
+const LeaveApprovalSupervisor = Loadable(lazy(() => import('views/leave-approval-supervisor')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -83,6 +85,14 @@ const MainRoutes = {
         {
             path: '/history-leave',
             element: <HistoryLeave />
+        },
+        {
+            path: '/timesheet',
+            element: <Timesheet />
+        },
+        {
+            path: '/leave-approval-supervisor',
+            element: <LeaveApprovalSupervisor />
         }
     ]
 };

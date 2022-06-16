@@ -180,7 +180,7 @@ const HistoryPresent = () => {
     const [month, setMonth] = useState(new Date().getMonth());
     const [year, setYear] = useState(new Date().getUTCFullYear());
     const [presentHistory, setPresentHistory] = useState([]);
-    const [employeeId, setEmployeeId] = useState(cookies.auth.employeeId);
+    const [employeeId, setEmployeeId] = useState(cookies.employeeId);
     const theme = useTheme();
 
     const monthList = [
@@ -209,7 +209,7 @@ const HistoryPresent = () => {
     const getPresentHistory = (newMonth, newYear) => {
         axios
             .get(`${config.baseUrl}absence/attendance/present-history?employeeId=${employeeId}&month=${newMonth}&year=${newYear}`, {
-                headers: { Authorization: `Bearer ${cookies.auth.token}` }
+                headers: { Authorization: `Bearer ${cookies.token}` }
             })
             .catch((error) => {
                 console.log(error);
@@ -339,12 +339,12 @@ const HistoryPresent = () => {
                                         </Grid>
                                         <Grid item xs={2}>
                                             <Typography variant="subtitle-1" fontSize={13}>
-                                                Kantor
+                                                {item.location}
                                             </Typography>
                                         </Grid>
                                         <Grid item xs={6}>
                                             <Typography variant="subtitle-1" fontSize={13}>
-                                                <td dangerouslySetInnerHTML={{ __html: item.task }} />
+                                                <td dangerouslySetInnerHTML={{ __html: item.taskHtml }} />
                                             </Typography>
                                         </Grid>
                                         <Grid item xs={2}>

@@ -130,7 +130,7 @@ const Employee = () => {
     const [editOpen, setEditOpen] = useState(Boolean);
     const [deleteOpen, setDeleteOpen] = useState(Boolean);
     const [item, setItem] = useState({});
-    const [userAuditId, setUserAuditId] = useState(cookies.auth.userId);
+    const [userAuditId, setUserAuditId] = useState(cookies.userId);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [responseMessage, setResponseMessage] = useState('');
     const [responseStatus, setResponseStatus] = useState('success');
@@ -140,7 +140,7 @@ const Employee = () => {
 
     const getListData = () => {
         axios
-            .get(`${config.baseUrl}absence/employee/find-all`, { headers: { Authorization: `Bearer ${cookies.auth.token}` } })
+            .get(`${config.baseUrl}absence/employee/find-all`, { headers: { Authorization: `Bearer ${cookies.token}` } })
             .catch((error) => {
                 console.log(error);
             })
@@ -153,7 +153,7 @@ const Employee = () => {
 
     const getDivisionListData = () => {
         axios
-            .get(`${config.baseUrl}absence/division/find-all`, { headers: { Authorization: `Bearer ${cookies.auth.token}` } })
+            .get(`${config.baseUrl}absence/division/find-all`, { headers: { Authorization: `Bearer ${cookies.token}` } })
             .catch((error) => {
                 console.log(error);
             })
@@ -238,7 +238,7 @@ const Employee = () => {
     const deActivateEmployee = () => {
         axios
             .delete(`${config.baseUrl}auth/employee/delete/${item.employeeId}`, {
-                headers: { Authorization: `Bearer ${cookies.auth.token}` }
+                headers: { Authorization: `Bearer ${cookies.token}` }
             })
             .then((response) => {
                 if (response.status) {
@@ -588,7 +588,7 @@ const Employee = () => {
                                 };
                                 axios
                                     .post(`${config.baseUrl}auth/employee/register`, body, {
-                                        headers: { Authorization: `Bearer ${cookies.auth.token}`, 'user-audit-id': userAuditId }
+                                        headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
                                     })
                                     .then((response) => {
                                         if (response.status) {
@@ -599,7 +599,7 @@ const Employee = () => {
                                                 axios
                                                     .post(`${config.baseUrl}absence/employee/upload-photo/${employeeId}`, bodyPhoto, {
                                                         headers: {
-                                                            Authorization: `Bearer ${cookies.auth.token}`,
+                                                            Authorization: `Bearer ${cookies.token}`,
                                                             'user-audit-id': userAuditId
                                                         }
                                                     })
@@ -957,7 +957,7 @@ const Employee = () => {
                                 };
                                 axios
                                     .put(`${config.baseUrl}absence/employee/update/${item.employeeId}`, body, {
-                                        headers: { Authorization: `Bearer ${cookies.auth.token}`, 'user-audit-id': userAuditId }
+                                        headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
                                     })
                                     .then((response) => {
                                         if (response.status) {
@@ -968,7 +968,7 @@ const Employee = () => {
                                                 axios
                                                     .post(`${config.baseUrl}absence/employee/upload-photo/${employeeId}`, bodyPhoto, {
                                                         headers: {
-                                                            Authorization: `Bearer ${cookies.auth.token}`,
+                                                            Authorization: `Bearer ${cookies.token}`,
                                                             'user-audit-id': userAuditId
                                                         }
                                                     })

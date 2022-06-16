@@ -119,14 +119,14 @@ const modalStyle = {
 };
 
 const LeaveSubmission = () => {
-    const [cookies, setCookie] = useCookies(['user']);
+    const [cookies, setCookie] = useCookies();
     const [data, setData] = useState([]);
     const [detailOpen, setDetailOpen] = useState(Boolean);
     const [createOpen, setCreateOpen] = useState(Boolean);
     const [editOpen, setEditOpen] = useState(Boolean);
     const [deleteOpen, setDeleteOpen] = useState(Boolean);
     const [item, setItem] = useState({});
-    const [userAuditId, setUserAuditId] = useState(cookies.auth.userId);
+    const [userAuditId, setUserAuditId] = useState(cookies.userId);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [responseMessage, setResponseMessage] = useState('');
     const [responseStatus, setResponseStatus] = useState('success');
@@ -135,7 +135,7 @@ const LeaveSubmission = () => {
 
     const getListData = () => {
         axios
-            .get(`${config.baseUrl}absence/leave-type/find-all`, { headers: { Authorization: `Bearer ${cookies.auth.token}` } })
+            .get(`${config.baseUrl}absence/leave-type/find-all`, { headers: { Authorization: `Bearer ${cookies.token}` } })
             .catch((error) => {
                 console.log(error);
             })
@@ -192,7 +192,7 @@ const LeaveSubmission = () => {
     const deleteLeaveType = () => {
         axios
             .delete(`${config.baseUrl}absence/leave-type/delete/${item.leaveTypeId}`, {
-                headers: { Authorization: `Bearer ${cookies.auth.token}` }
+                headers: { Authorization: `Bearer ${cookies.token}` }
             })
             .then((response) => {
                 if (response.status) {
@@ -433,7 +433,7 @@ const LeaveSubmission = () => {
                                 };
                                 axios
                                     .post(`${config.baseUrl}absence/leave-type/create`, body, {
-                                        headers: { Authorization: `Bearer ${cookies.auth.token}`, 'user-audit-id': userAuditId }
+                                        headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
                                     })
                                     .then((response) => {
                                         setResponseStatus(response.data.status);
@@ -582,7 +582,7 @@ const LeaveSubmission = () => {
                                 };
                                 axios
                                     .put(`${config.baseUrl}absence/leave-type/update/${item.leaveTypeId}`, body, {
-                                        headers: { Authorization: `Bearer ${cookies.auth.token}`, 'user-audit-id': userAuditId }
+                                        headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
                                     })
                                     .then((response) => {
                                         setResponseStatus(response.data.status);

@@ -13,6 +13,7 @@ import {
     ListItemText,
     Grid,
     Typography,
+    Divider,
     FormControl,
     InputLabel,
     FormHelperText,
@@ -38,9 +39,7 @@ import {
     Slide,
     CircularProgress,
     Icon,
-    Paper,
-    Chip,
-    Divider
+    Paper
 } from '@mui/material';
 import DataTable from 'react-data-table-component-with-filter';
 import { useTheme, styled } from '@mui/material/styles';
@@ -65,8 +64,10 @@ import {
     IconNotes,
     IconFileCheck,
     IconFileText,
+    IconFileDownload,
     IconTable,
-    IconFileDownload
+    IconCircleOff,
+    IconCircleX
 } from '@tabler/icons';
 import { useEffect, useState } from 'react';
 import config from 'config';
@@ -115,15 +116,6 @@ const HeaderAvatarStyle = styled(Avatar, { shouldForwardProp })(({ theme }) => (
     }
 }));
 
-const paperHeader = {
-    marginBottom: '10px'
-};
-
-const paperBody = {
-    marginTop: '4px',
-    marginBottom: '8px'
-};
-
 const modalStyle = {
     position: 'absolute',
     top: '50%',
@@ -138,6 +130,15 @@ const modalStyle = {
     overflowY: 'scroll'
 };
 
+const paperHeader = {
+    marginBottom: '10px'
+};
+
+const paperBody = {
+    marginTop: '4px',
+    marginBottom: '8px'
+};
+
 const CardWrapper = styled(MainCard)(({ theme }) => ({
     overflow: 'hidden',
     position: 'relative',
@@ -146,7 +147,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
         position: 'absolute',
         width: 210,
         height: 210,
-        background: `linear-gradient(210.04deg, ${theme.palette.error.dark} -50.94%, rgba(144, 202, 249, 0) 83.49%)`,
+        background: `linear-gradient(210.04deg, ${theme.palette.secondary.dark} -50.94%, rgba(144, 202, 249, 0) 83.49%)`,
         borderRadius: '50%',
         top: -30,
         right: -180
@@ -156,20 +157,37 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
         position: 'absolute',
         width: 210,
         height: 210,
-        background: `linear-gradient(140.9deg, ${theme.palette.error.dark} -14.02%, rgba(144, 202, 249, 0) 70.50%)`,
+        background: `linear-gradient(140.9deg, ${theme.palette.secondary.dark} -14.02%, rgba(144, 202, 249, 0) 70.50%)`,
         borderRadius: '50%',
         top: -160,
         right: -130
     }
 }));
 
-const HistorySick = () => {
-    const [cookies, setCookie] = useCookies();
-    const [month, setMonth] = useState(new Date().getMonth());
+const LeaveApprovalSupervisor = () => {
+    const [cookies, setCookie] = useCookies(['user']);
     const [year, setYear] = useState(new Date().getUTCFullYear());
-    const [sickHistory, setSickHistory] = useState([]);
-    const [employeeId, setEmployeeId] = useState(cookies.employeeId);
+    const [leaveSubmissionId, setLeaveSubmissionId] = useState('');
+    const [divisionId, setDivisionId] = useState(cookies.division.divisionId);
+    const [leaveApproval, setLeaveApproval] = useState([]);
+    const [userAuditId, setUserAuditId] = useState(cookies.userId);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [responseMessage, setResponseMessage] = useState('');
+    const [responseStatus, setResponseStatus] = useState('success');
+    const [dialogOpen, setDialogOpen] = useState(false);
     const theme = useTheme();
+
+    const handleSnackbarClose = () => {
+        setSnackbarOpen(false);
+    };
+
+    const handleDialogOpen = () => {
+        setDialogOpen(true);
+    };
+
+    const handleDialogClose = () => {
+        setDialogOpen(false);
+    };
 
     const monthList = [
         { value: 0, name: 'January' },
@@ -194,32 +212,9 @@ const HistorySick = () => {
         { value: new Date().getUTCFullYear(), name: new Date().getUTCFullYear() }
     ];
 
-    const b64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
-        const byteCharacters = atob(b64Data);
-        const byteArrays = [];
-        for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-            const slice = byteCharacters.slice(offset, offset + sliceSize);
-            const byteNumbers = new Array(slice.length);
-            for (let i = 0; i < slice.length; i += 1) {
-                byteNumbers[i] = slice.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            byteArrays.push(byteArray);
-        }
-        const blob = new Blob(byteArrays, { type: contentType });
-        return blob;
-    };
-
-    const viewFile = (item) => {
-        const blob = b64toBlob(item.document, 'application/pdf');
-        const blobUrl = URL.createObjectURL(blob);
-        const pdfWindow = window.open();
-        pdfWindow.location.href = blobUrl;
-    };
-
-    const getSickHistory = (newMonth, newYear) => {
+    const getLeaveApproval = (newYear) => {
         axios
-            .get(`${config.baseUrl}absence/attendance/sick-history?employeeId=${employeeId}&month=${newMonth}&year=${newYear}`, {
+            .get(`${config.baseUrl}absence/leave/find-all-supervisor?year=${newYear}&divisionId=${divisionId}`, {
                 headers: { Authorization: `Bearer ${cookies.token}` }
             })
             .catch((error) => {
@@ -227,13 +222,32 @@ const HistorySick = () => {
             })
             .then((response) => {
                 if (response.status === 200) {
-                    setSickHistory(response.data.data);
+                    setLeaveApproval(response.data.data);
+                }
+            });
+    };
+
+    const cancelLeave = () => {
+        axios
+            .get(`${config.baseUrl}absence/leave/cancel/${leaveSubmissionId}`, {
+                headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
+            })
+            .catch((error) => {
+                console.log(error);
+            })
+            .then((response) => {
+                if (response.status === 200) {
+                    setResponseStatus(response.data.status);
+                    setResponseMessage(response.data.message);
+                    setSnackbarOpen(true);
+                    handleDialogClose();
+                    getLeaveApproval(year);
                 }
             });
     };
 
     useEffect(() => {
-        getSickHistory(month, year);
+        getLeaveApproval(year);
     }, []);
 
     return (
@@ -250,11 +264,11 @@ const HistorySick = () => {
                                             margin: 0,
                                             ...theme.typography.commonAvatar,
                                             ...theme.typography.largeAvatar,
-                                            backgroundColor: '#F44336',
+                                            backgroundColor: '#673AB7',
                                             color: '#fff'
                                         }}
                                     >
-                                        <IconTable />
+                                        <IconFileCheck />
                                     </Avatar>
                                 </ListItemAvatar>
                                 <ListItemText
@@ -264,8 +278,8 @@ const HistorySick = () => {
                                         mb: 0.45
                                     }}
                                     primary={
-                                        <Typography variant="h2" sx={{ color: '#F44336' }}>
-                                            Sick History
+                                        <Typography variant="h2" sx={{ color: '#673AB7' }}>
+                                            Leave Approval
                                         </Typography>
                                     }
                                 />
@@ -277,29 +291,7 @@ const HistorySick = () => {
             <Grid item xs={12}>
                 <MainCard>
                     <Grid spacing={2} style={{ marginBottom: 20 }} container>
-                        <Grid item xs={8} />
-                        <Grid item xs={2}>
-                            <FormControl fullWidth size="small">
-                                <InputLabel htmlFor="month">Month*</InputLabel>
-                                <Select
-                                    id="month"
-                                    name="month"
-                                    label="month*"
-                                    value={month}
-                                    onChange={(event) => {
-                                        setMonth(event.target.value);
-                                        getSickHistory(event.target.value, year);
-                                    }}
-                                    inputProps={{}}
-                                >
-                                    {monthList.map((item) => (
-                                        <MenuItem id={item.value} value={item.value}>
-                                            {item.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
+                        <Grid item xs={10} />
                         <Grid item xs={2}>
                             <FormControl fullWidth size="small">
                                 <InputLabel htmlFor="month">Year*</InputLabel>
@@ -310,7 +302,7 @@ const HistorySick = () => {
                                     value={year}
                                     onChange={(event) => {
                                         setYear(event.target.value);
-                                        getSickHistory(month, event.target.value);
+                                        getLeaveApproval(event.target.value);
                                     }}
                                     inputProps={{}}
                                 >
@@ -336,9 +328,14 @@ const HistorySick = () => {
                                         End Date
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={4}>
+                                <Grid item xs={2}>
                                     <Typography variant="subtitle-1" fontWeight={800}>
                                         Description
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={2}>
+                                    <Typography variant="subtitle-1" fontWeight={800}>
+                                        Reason
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={2}>
@@ -346,14 +343,19 @@ const HistorySick = () => {
                                         Sub Partner
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={2}>
+                                <Grid item xs={1}>
                                     <Typography variant="subtitle-1" fontWeight={800}>
-                                        Document
+                                        Status
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={1}>
+                                    <Typography variant="subtitle-1" fontWeight={800}>
+                                        Action
                                     </Typography>
                                 </Grid>
                             </Grid>
                         </Paper>
-                        {sickHistory.map((item) => (
+                        {leaveApproval.map((item) => (
                             <>
                                 <Paper>
                                     <Divider />
@@ -364,26 +366,41 @@ const HistorySick = () => {
                                         <Grid item xs={2}>
                                             <Typography variant="subtitle-1">{moment(item.endDate).format('LL')}</Typography>
                                         </Grid>
-                                        <Grid item xs={4}>
+                                        <Grid item xs={2}>
                                             <Typography variant="subtitle-1">
                                                 <td dangerouslySetInnerHTML={{ __html: item.descriptionHtml }} />
                                             </Typography>
                                         </Grid>
                                         <Grid item xs={2}>
-                                            <Typography variant="subtitle-1">{item.subPartnerName}</Typography>
+                                            <Typography variant="subtitle-1">
+                                                <td dangerouslySetInnerHTML={{ __html: item.reason }} />
+                                            </Typography>
                                         </Grid>
                                         <Grid item xs={2}>
+                                            <Typography variant="subtitle-1">{item.subPartnerName}</Typography>
+                                        </Grid>
+                                        <Grid item xs={1}>
+                                            <Typography variant="subtitle-1">{item.submissionStatusName}</Typography>
+                                        </Grid>
+                                        <Grid item xs={1}>
                                             <Typography variant="subtitle-1">
-                                                <IconButton
-                                                    color="primary"
-                                                    size="medium"
-                                                    disableRipple
-                                                    onClick={() => {
-                                                        viewFile(item);
-                                                    }}
-                                                >
-                                                    <IconFileDownload />
-                                                </IconButton>
+                                                {item.submissionStatusName === 'Cancelled' || item.submissionStatusName === 'Approved' ? (
+                                                    <>No Action</>
+                                                ) : (
+                                                    <Tooltip title="Cancel">
+                                                        <IconButton
+                                                            onClick={() => {
+                                                                setLeaveSubmissionId(item.leaveSubmissionId);
+                                                                handleDialogOpen();
+                                                            }}
+                                                            color="error"
+                                                            size="medium"
+                                                            disableRipple
+                                                        >
+                                                            <IconCircleX />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                )}
                                             </Typography>
                                         </Grid>
                                     </Grid>
@@ -393,8 +410,38 @@ const HistorySick = () => {
                     </MainCard>
                 </MainCard>
             </Grid>
+            <Dialog
+                open={dialogOpen}
+                onClose={handleDialogClose}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle fontSize={16} id="alert-dialog-title">
+                    Cancel Leave Confirmation
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">Are you sure want to cancel this submission leave ?</DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleDialogClose}>No</Button>
+                    <Button onClick={cancelLeave} autoFocus>
+                        Yes
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={3000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                TransitionComponent={Slide}
+            >
+                <Alert onClose={handleSnackbarClose} severity={responseStatus} sx={{ width: '100%' }}>
+                    {responseMessage}
+                </Alert>
+            </Snackbar>
         </Grid>
     );
 };
 
-export default HistorySick;
+export default LeaveApprovalSupervisor;

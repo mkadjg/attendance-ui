@@ -126,7 +126,7 @@ const Holiday = () => {
     const [editOpen, setEditOpen] = useState(Boolean);
     const [deleteOpen, setDeleteOpen] = useState(Boolean);
     const [item, setItem] = useState({});
-    const [userAuditId, setUserAuditId] = useState(cookies.auth.userId);
+    const [userAuditId, setUserAuditId] = useState(cookies.userId);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [responseMessage, setResponseMessage] = useState('');
     const [responseStatus, setResponseStatus] = useState('success');
@@ -135,7 +135,7 @@ const Holiday = () => {
 
     const getListData = () => {
         axios
-            .get(`${config.baseUrl}absence/holiday/find-all`, { headers: { Authorization: `Bearer ${cookies.auth.token}` } })
+            .get(`${config.baseUrl}absence/holiday/find-all`, { headers: { Authorization: `Bearer ${cookies.token}` } })
             .catch((error) => {
                 console.log(error);
             })
@@ -192,7 +192,7 @@ const Holiday = () => {
     const deleteLeaveType = () => {
         axios
             .delete(`${config.baseUrl}absence/holiday/delete/${item.holidayId}`, {
-                headers: { Authorization: `Bearer ${cookies.auth.token}` }
+                headers: { Authorization: `Bearer ${cookies.token}` }
             })
             .then((response) => {
                 if (response.status) {
@@ -427,7 +427,7 @@ const Holiday = () => {
                                 };
                                 axios
                                     .post(`${config.baseUrl}absence/holiday/create`, body, {
-                                        headers: { Authorization: `Bearer ${cookies.auth.token}`, 'user-audit-id': userAuditId }
+                                        headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
                                     })
                                     .then((response) => {
                                         setResponseStatus(response.data.status);
@@ -577,7 +577,7 @@ const Holiday = () => {
                                 };
                                 axios
                                     .put(`${config.baseUrl}absence/holiday/update/${item.holidayId}`, body, {
-                                        headers: { Authorization: `Bearer ${cookies.auth.token}`, 'user-audit-id': userAuditId }
+                                        headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
                                     })
                                     .then((response) => {
                                         setResponseStatus(response.data.status);

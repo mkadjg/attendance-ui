@@ -126,7 +126,7 @@ const Project = () => {
     const [editOpen, setEditOpen] = useState(Boolean);
     const [deleteOpen, setDeleteOpen] = useState(Boolean);
     const [item, setItem] = useState({});
-    const [userAuditId, setUserAuditId] = useState(cookies.auth.userId);
+    const [userAuditId, setUserAuditId] = useState(cookies.userId);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [responseMessage, setResponseMessage] = useState('');
     const [responseStatus, setResponseStatus] = useState('success');
@@ -136,7 +136,7 @@ const Project = () => {
 
     const getListData = () => {
         axios
-            .get(`${config.baseUrl}absence/project/find-all`, { headers: { Authorization: `Bearer ${cookies.auth.token}` } })
+            .get(`${config.baseUrl}absence/project/find-all`, { headers: { Authorization: `Bearer ${cookies.token}` } })
             .catch((error) => {
                 console.log(error);
             })
@@ -149,7 +149,7 @@ const Project = () => {
 
     const getDivisionListData = () => {
         axios
-            .get(`${config.baseUrl}absence/division/find-all`, { headers: { Authorization: `Bearer ${cookies.auth.token}` } })
+            .get(`${config.baseUrl}absence/division/find-all`, { headers: { Authorization: `Bearer ${cookies.token}` } })
             .catch((error) => {
                 console.log(error);
             })
@@ -208,7 +208,7 @@ const Project = () => {
     const deleteProject = () => {
         axios
             .delete(`${config.baseUrl}absence/project/delete/${item.projectId}`, {
-                headers: { Authorization: `Bearer ${cookies.auth.token}` }
+                headers: { Authorization: `Bearer ${cookies.token}` }
             })
             .then((response) => {
                 if (response.status) {
@@ -443,7 +443,7 @@ const Project = () => {
                                 };
                                 axios
                                     .post(`${config.baseUrl}absence/project/create`, body, {
-                                        headers: { Authorization: `Bearer ${cookies.auth.token}`, 'user-audit-id': userAuditId }
+                                        headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
                                     })
                                     .then((response) => {
                                         setResponseStatus(response.data.status);
@@ -603,7 +603,7 @@ const Project = () => {
                                 };
                                 axios
                                     .put(`${config.baseUrl}absence/project/update/${item.projectId}`, body, {
-                                        headers: { Authorization: `Bearer ${cookies.auth.token}`, 'user-audit-id': userAuditId }
+                                        headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
                                     })
                                     .then((response) => {
                                         setResponseStatus(response.data.status);

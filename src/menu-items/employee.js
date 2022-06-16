@@ -1,8 +1,8 @@
 // assets
-import { IconFileCheck, IconDashboard, IconFileX, IconFileExport, IconFileText, IconTable } from '@tabler/icons';
+import { IconFileCheck, IconDashboard, IconFileX, IconFileExport, IconFileText, IconTable, IconListNumbers } from '@tabler/icons';
 
 // constant
-const icons = { IconFileCheck, IconDashboard, IconFileX, IconFileExport, IconFileText, IconTable };
+const icons = { IconFileCheck, IconDashboard, IconFileX, IconFileExport, IconFileText, IconTable, IconListNumbers };
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
@@ -18,6 +18,21 @@ const employee = [
                 type: 'item',
                 url: '/dashboard',
                 icon: icons.IconDashboard,
+                breadcrumbs: false
+            }
+        ]
+    },
+    {
+        id: 'timesheet',
+        title: 'Timesheet',
+        type: 'group',
+        children: [
+            {
+                id: 'timesheet-item',
+                title: 'Timesheet',
+                type: 'item',
+                url: '/timesheet',
+                icon: icons.IconListNumbers,
                 breadcrumbs: false
             }
         ]

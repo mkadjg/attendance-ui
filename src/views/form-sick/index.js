@@ -64,7 +64,7 @@ import {
     IconFileCheck,
     IconFileText
 } from '@tabler/icons';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import config from 'config';
 import axios from 'axios';
 import { useCookies } from 'react-cookie';
@@ -155,17 +155,18 @@ const FormSick = () => {
     const [startDate, setStartDate] = useState(Date.now());
     const [endDate, setEndDate] = useState(Date.now());
     const [subPartnerId, setSubPartnerId] = useState('');
-    const [description, setDescription] = useState('');
+    const [description, setDescription] = useState({ html: '', text: '' });
     const [file, setFile] = useState({ raw: '', preview: '' });
     const [partners, setPartners] = useState([]);
-    const [employeeId, setEmployeeId] = useState(cookies.auth?.employeeId);
-    const [divisionId, setDivisionId] = useState(cookies.division?.divisionId);
-    const [userAuditId, setUserAuditId] = useState(cookies.auth?.userId);
+    const [employeeId, setEmployeeId] = useState(cookies?.employeeId);
+    const [divisionId, setDivisionId] = useState(cookies.division.divisionId);
+    const [userAuditId, setUserAuditId] = useState(cookies?.userId);
     const [disableSubmit, setDisableSubmit] = useState(false);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [responseMessage, setResponseMessage] = useState('');
     const [responseStatus, setResponseStatus] = useState('success');
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [fileEvent, setFileEvent] = useState(null);
     const theme = useTheme();
 
     const handleSnackbarClose = () => {
@@ -180,10 +181,35 @@ const FormSick = () => {
         setDialogOpen(false);
     };
 
+    const handleChangeFile = (event) => {
+        if (event.target.files.length > 0) {
+            setFileEvent(event);
+            setFile({
+                raw: event.target.files[0],
+                preview: URL.createObjectURL(event.target.files[0])
+            });
+        } else {
+            setFileEvent(null);
+            setFile({
+                raw: null,
+                preview: null
+            });
+        }
+    };
+
+    const clearForm = () => {
+        setSubPartnerId('');
+        setStartDate(Date.now());
+        setEndDate(Date.now());
+        setDescription('');
+        fileEvent.target.value = '';
+        handleChangeFile(fileEvent);
+    };
+
     const getSubPartner = () => {
         axios
             .get(`${config.baseUrl}absence/employee/partner?employeeId=${employeeId}&divisionId=${divisionId}`, {
-                headers: { Authorization: `Bearer ${cookies.auth.token}` }
+                headers: { Authorization: `Bearer ${cookies.token}` }
             })
             .catch((error) => {
                 console.log(error);
@@ -195,33 +221,21 @@ const FormSick = () => {
             });
     };
 
-    const handleChangeFile = (event) => {
-        if (event.target.files.length > 0) {
-            setFile({
-                raw: event.target.files[0],
-                preview: URL.createObjectURL(event.target.files[0])
-            });
-        } else {
-            setFile({
-                raw: null,
-                preview: null
-            });
-        }
-    };
-
     const saveAttendanceSick = () => {
         try {
             setDisableSubmit(true);
+            handleDialogClose();
             const body = {
                 employeeId,
                 subPartnerId,
                 startDate,
                 endDate,
-                description
+                descriptionHtml: description.html,
+                descriptionText: description.text
             };
             axios
                 .post(`${config.baseUrl}absence/attendance/sick`, body, {
-                    headers: { Authorization: `Bearer ${cookies.auth.token}`, 'user-audit-id': userAuditId }
+                    headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
                 })
                 .then((response) => {
                     if (response.status) {
@@ -232,7 +246,7 @@ const FormSick = () => {
                             axios
                                 .post(`${config.baseUrl}absence/attendance/upload-document/${sickId}`, bodyFile, {
                                     headers: {
-                                        Authorization: `Bearer ${cookies.auth.token}`,
+                                        Authorization: `Bearer ${cookies.token}`,
                                         'user-audit-id': userAuditId
                                     }
                                 })
@@ -252,6 +266,7 @@ const FormSick = () => {
                         handleDialogClose();
                         setDisableSubmit(false);
                     }
+                    clearForm();
                 })
                 .catch((error) => {
                     setResponseStatus('error');
@@ -259,6 +274,7 @@ const FormSick = () => {
                     setSnackbarOpen(true);
                     handleDialogClose();
                     setDisableSubmit(false);
+                    clearForm();
                 });
         } catch (err) {
             setResponseStatus('error');
@@ -266,6 +282,7 @@ const FormSick = () => {
             setSnackbarOpen(true);
             handleDialogClose();
             setDisableSubmit(false);
+            clearForm();
         }
     };
 
@@ -330,7 +347,9 @@ const FormSick = () => {
                                                     value={startDate}
                                                     onChange={(newValue) => {
                                                         setStartDate(newValue);
+                                                        setEndDate(newValue);
                                                     }}
+                                                    minDate={new Date()}
                                                     renderInput={(params) => <TextField {...params} />}
                                                 />
                                             </LocalizationProvider>
@@ -343,6 +362,7 @@ const FormSick = () => {
                                                     onChange={(newValue) => {
                                                         setEndDate(newValue);
                                                     }}
+                                                    minDate={startDate}
                                                     renderInput={(params) => <TextField {...params} />}
                                                 />
                                             </LocalizationProvider>
@@ -384,9 +404,9 @@ const FormSick = () => {
                                                 style={{ height: 120 }}
                                                 id="description-id"
                                                 name="description"
-                                                value={description}
-                                                onChange={(newValue) => {
-                                                    setDescription(newValue);
+                                                value={description.html}
+                                                onChange={(content, delta, source, editor) => {
+                                                    setDescription({ html: content, text: editor.getText() });
                                                 }}
                                             />
                                         </FormControl>
@@ -424,10 +444,10 @@ const FormSick = () => {
                 aria-describedby="alert-dialog-description"
             >
                 <DialogTitle fontSize={16} id="alert-dialog-title">
-                    Delete Employee Confirmation
+                    Submit Form Confirmation
                 </DialogTitle>
                 <DialogContent>
-                    <DialogContentText id="alert-dialog-description">Are you sure want to delete ?</DialogContentText>
+                    <DialogContentText id="alert-dialog-description">Are you sure want to submit this sick form ?</DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleDialogClose}>No</Button>

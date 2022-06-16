@@ -152,15 +152,30 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 }));
 
 const FormLeave = () => {
+    const getStartDate = () => {
+        const today = new Date();
+        const startDate = new Date();
+        startDate.setDate(today.getDate() + 3);
+        return startDate;
+    };
+    const [startDate, setStartDate] = useState(getStartDate);
+    const getEndDate = () => {
+        const endDate = new Date();
+        endDate.setDate(getStartDate().getDate() + 1);
+        return endDate;
+    };
     const [cookies, setCookie] = useCookies(['user']);
-    const [startDate, setStartDate] = useState(Date.now());
-    const [endDate, setEndDate] = useState(Date.now());
+    const [endDate, setEndDate] = useState(getEndDate);
     const [subPartnerId, setSubPartnerId] = useState('');
-    const [description, setDescription] = useState('');
+    const [leaveTypeId, setLeaveTypeId] = useState('');
+    const [description, setDescription] = useState({ html: '', text: '' });
     const [partners, setPartners] = useState([]);
-    const [employeeId, setEmployeeId] = useState(cookies.auth?.employeeId);
+    const [leaveTypes, setLeaveTypes] = useState([]);
+    const [employeeLeave, setEmployeeLeave] = useState([]);
+    const [employeeId, setEmployeeId] = useState(cookies?.employeeId);
     const [divisionId, setDivisionId] = useState(cookies.division?.divisionId);
-    const [userAuditId, setUserAuditId] = useState(cookies.auth?.userId);
+    const [userAuditId, setUserAuditId] = useState(cookies?.userId);
+    const [totalDaysOff, setTotalDaysOff] = useState(0);
     const [disableSubmit, setDisableSubmit] = useState(false);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [responseMessage, setResponseMessage] = useState('');
@@ -183,7 +198,7 @@ const FormLeave = () => {
     const getSubPartner = () => {
         axios
             .get(`${config.baseUrl}absence/employee/partner?employeeId=${employeeId}&divisionId=${divisionId}`, {
-                headers: { Authorization: `Bearer ${cookies.auth.token}` }
+                headers: { Authorization: `Bearer ${cookies.token}` }
             })
             .catch((error) => {
                 console.log(error);
@@ -195,19 +210,80 @@ const FormLeave = () => {
             });
     };
 
+    const validateTotalDaysOff = (newEndDate) => {
+        axios
+            .get(
+                `${
+                    config.baseUrl
+                }absence/leave/validate-total-days?startDate=${startDate.toDateString()}&endDate=${newEndDate.toDateString()}`,
+                {
+                    headers: { Authorization: `Bearer ${cookies.token}` }
+                }
+            )
+            .then((response) => {
+                if (response.status === 200) {
+                    setTotalDaysOff(response.data.data);
+                }
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    };
+
+    const getLeaveType = () => {
+        axios
+            .get(`${config.baseUrl}absence/leave-type/find-all`, { headers: { Authorization: `Bearer ${cookies.token}` } })
+            .then((response) => {
+                if (response.status === 200) {
+                    setLeaveTypes(response.data.data);
+                }
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    };
+
+    const getEmployeeLeave = () => {
+        axios
+            .get(`${config.baseUrl}absence/leave/employee/${employeeId}`, {
+                headers: { Authorization: `Bearer ${cookies.token}` }
+            })
+            .then((response) => {
+                if (response.status === 200) {
+                    setEmployeeLeave(response.data.data);
+                }
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    };
+
+    const clearForm = () => {
+        setStartDate(getStartDate());
+        setEndDate(getEndDate);
+        setDescription({ html: '', text: '' });
+        setSubPartnerId('');
+        setTotalDaysOff(0);
+        setLeaveTypeId('');
+    };
+
     const saveLeaveSubmission = () => {
         try {
+            handleDialogClose();
             setDisableSubmit(true);
             const body = {
                 employeeId,
                 startDate,
                 endDate,
-                description,
-                subPartnerId
+                descriptionHtml: description.html,
+                descriptionText: description.text,
+                subPartnerId,
+                totalDaysOff,
+                leaveTypeId
             };
             axios
                 .post(`${config.baseUrl}absence/leave/submission`, body, {
-                    headers: { Authorization: `Bearer ${cookies.auth.token}`, 'user-audit-id': userAuditId }
+                    headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
                 })
                 .then((response) => {
                     if (response.status) {
@@ -216,12 +292,15 @@ const FormLeave = () => {
                         setSnackbarOpen(true);
                         handleDialogClose();
                         setDisableSubmit(false);
+                        getEmployeeLeave();
+                        clearForm();
                     } else {
                         setResponseStatus('error');
                         setResponseMessage('Oops Internal Server Error!');
                         setSnackbarOpen(true);
                         handleDialogClose();
                         setDisableSubmit(false);
+                        clearForm();
                     }
                 })
                 .catch((error) => {
@@ -230,6 +309,7 @@ const FormLeave = () => {
                     setSnackbarOpen(true);
                     handleDialogClose();
                     setDisableSubmit(false);
+                    clearForm();
                 });
         } catch (err) {
             setResponseStatus('error');
@@ -237,11 +317,14 @@ const FormLeave = () => {
             setSnackbarOpen(true);
             handleDialogClose();
             setDisableSubmit(false);
+            clearForm();
         }
     };
 
     useEffect(() => {
         getSubPartner();
+        getLeaveType();
+        getEmployeeLeave();
     }, []);
 
     return (
@@ -284,76 +367,43 @@ const FormLeave = () => {
             </Grid>
             <Grid item xs={12}>
                 <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                        <MainCard border={false} content={false} sx={{ p: 2 }}>
-                            <List sx={{ py: 0 }}>
-                                <ListItem alignItems="center" disableGutters sx={{ py: 0 }}>
-                                    <ListItemAvatar>
-                                        <Avatar
-                                            variant="rounded"
+                    {employeeLeave.map((item) => (
+                        <Grid item xs={6}>
+                            <MainCard border={false} content={false} sx={{ p: 2 }}>
+                                <List sx={{ py: 0 }}>
+                                    <ListItem alignItems="center" disableGutters sx={{ py: 0 }}>
+                                        <ListItemAvatar>
+                                            <Avatar
+                                                variant="rounded"
+                                                sx={{
+                                                    margin: 0,
+                                                    ...theme.typography.commonAvatar,
+                                                    ...theme.typography.largeAvatar,
+                                                    backgroundColor: theme.palette.primary.light,
+                                                    color: theme.palette.primary
+                                                }}
+                                            >
+                                                <IconCalendarOff />
+                                            </Avatar>
+                                        </ListItemAvatar>
+                                        <ListItemText
                                             sx={{
-                                                margin: 0,
-                                                ...theme.typography.commonAvatar,
-                                                ...theme.typography.largeAvatar,
-                                                backgroundColor: theme.palette.primary.light,
-                                                color: theme.palette.primary
+                                                py: 0,
+                                                mt: 0.45,
+                                                mb: 0.45
                                             }}
-                                        >
-                                            <IconCalendarOff />
-                                        </Avatar>
-                                    </ListItemAvatar>
-                                    <ListItemText
-                                        sx={{
-                                            py: 0,
-                                            mt: 0.45,
-                                            mb: 0.45
-                                        }}
-                                        primary={
-                                            <Typography variant="h4" sx={{ color: theme.palette.primary }}>
-                                                5
-                                            </Typography>
-                                        }
-                                        secondary="Cuti Lintas Tahun"
-                                    />
-                                </ListItem>
-                            </List>
-                        </MainCard>
-                    </Grid>
-                    <Grid item xs={6}>
-                        <MainCard border={false} content={false} sx={{ p: 2 }}>
-                            <List sx={{ py: 0 }}>
-                                <ListItem alignItems="center" disableGutters sx={{ py: 0 }}>
-                                    <ListItemAvatar>
-                                        <Avatar
-                                            variant="rounded"
-                                            sx={{
-                                                margin: 0,
-                                                ...theme.typography.commonAvatar,
-                                                ...theme.typography.largeAvatar,
-                                                backgroundColor: theme.palette.primary.light,
-                                                color: theme.palette.primary
-                                            }}
-                                        >
-                                            <IconCalendarOff />
-                                        </Avatar>
-                                    </ListItemAvatar>
-                                    <ListItemText
-                                        sx={{
-                                            py: 0,
-                                            mt: 0.45,
-                                            mb: 0.45
-                                        }}
-                                        primary={
-                                            <Typography variant="h4" sx={{ color: theme.palette.pri }}>
-                                                10
-                                            </Typography>
-                                        }
-                                        secondary="Cuti Tahunan"
-                                    />
-                                </ListItem>
-                            </List>
-                        </MainCard>
-                    </Grid>
+                                            primary={
+                                                <Typography variant="h4" sx={{ color: theme.palette.primary }}>
+                                                    {item.available}
+                                                </Typography>
+                                            }
+                                            secondary={item.leaveType.leaveTypeName}
+                                        />
+                                    </ListItem>
+                                </List>
+                            </MainCard>
+                        </Grid>
+                    ))}
                 </Grid>
             </Grid>
             <Grid item xs={12}>
@@ -376,6 +426,7 @@ const FormLeave = () => {
                                                     onChange={(newValue) => {
                                                         setStartDate(newValue);
                                                     }}
+                                                    minDate={getStartDate()}
                                                     renderInput={(params) => <TextField {...params} />}
                                                 />
                                             </LocalizationProvider>
@@ -387,10 +438,26 @@ const FormLeave = () => {
                                                     value={endDate}
                                                     onChange={(newValue) => {
                                                         setEndDate(newValue);
+                                                        validateTotalDaysOff(newValue);
                                                     }}
+                                                    minDate={getEndDate()}
                                                     renderInput={(params) => <TextField {...params} />}
                                                 />
                                             </LocalizationProvider>
+                                        </FormControl>
+                                        <FormControl fullWidth style={{ marginBottom: 18 }}>
+                                            <TextField
+                                                id="total-days-off"
+                                                type="text"
+                                                value={totalDaysOff}
+                                                name="totalDaysOff"
+                                                disabled="true"
+                                                onChange={(event) => {
+                                                    setTotalDaysOff(event.target.value);
+                                                }}
+                                                label="Total Days Off*"
+                                                inputProps={{}}
+                                            />
                                         </FormControl>
                                         <FormControl fullWidth style={{ marginBottom: 18 }}>
                                             <InputLabel htmlFor="sub-partner-id">Sub Partner*</InputLabel>
@@ -411,6 +478,25 @@ const FormLeave = () => {
                                                 ))}
                                             </Select>
                                         </FormControl>
+                                        <FormControl fullWidth style={{ marginBottom: 18 }}>
+                                            <InputLabel htmlFor="leave-type-id">Leave Type*</InputLabel>
+                                            <Select
+                                                id="leave-type-id"
+                                                value={leaveTypeId}
+                                                name="leaveTypeId"
+                                                label="Leave Type*"
+                                                onChange={(event) => {
+                                                    setLeaveTypeId(event.target.value);
+                                                }}
+                                                inputProps={{}}
+                                            >
+                                                {leaveTypes.map((item) => (
+                                                    <MenuItem id={item.leaveTypeId} value={item.leaveTypeId}>
+                                                        {item.leaveTypeName}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
                                     </Grid>
                                     <Grid item xs={7}>
                                         <FormControl fullWidth style={{ marginBottom: 18 }}>
@@ -419,9 +505,9 @@ const FormLeave = () => {
                                                 style={{ height: 120 }}
                                                 id="description-id"
                                                 name="description"
-                                                value={description}
-                                                onChange={(newValue) => {
-                                                    setDescription(newValue);
+                                                value={description.html}
+                                                onChange={(content, delta, source, editor) => {
+                                                    setDescription({ html: content, text: editor.getText() });
                                                 }}
                                             />
                                         </FormControl>
@@ -459,10 +545,10 @@ const FormLeave = () => {
                 aria-describedby="alert-dialog-description"
             >
                 <DialogTitle fontSize={16} id="alert-dialog-title">
-                    Delete Employee Confirmation
+                    SUbmit Form Confirmation
                 </DialogTitle>
                 <DialogContent>
-                    <DialogContentText id="alert-dialog-description">Are you sure want to delete ?</DialogContentText>
+                    <DialogContentText id="alert-dialog-description">Are you sure want to submit this leave form ?</DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleDialogClose}>No</Button>

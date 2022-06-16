@@ -126,7 +126,7 @@ const Division = () => {
     const [editOpen, setEditOpen] = useState(Boolean);
     const [deleteOpen, setDeleteOpen] = useState(Boolean);
     const [item, setItem] = useState({});
-    const [userAuditId, setUserAuditId] = useState(cookies.auth.userId);
+    const [userAuditId, setUserAuditId] = useState(cookies.userId);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [responseMessage, setResponseMessage] = useState('');
     const [responseStatus, setResponseStatus] = useState('success');
@@ -135,7 +135,7 @@ const Division = () => {
 
     const getListData = () => {
         axios
-            .get(`${config.baseUrl}absence/division/find-all`, { headers: { Authorization: `Bearer ${cookies.auth.token}` } })
+            .get(`${config.baseUrl}absence/division/find-all`, { headers: { Authorization: `Bearer ${cookies.token}` } })
             .catch((error) => {
                 console.log(error);
             })
@@ -192,7 +192,7 @@ const Division = () => {
     const deleteDivision = () => {
         axios
             .delete(`${config.baseUrl}absence/division/delete/${item.divisionId}`, {
-                headers: { Authorization: `Bearer ${cookies.auth.token}` }
+                headers: { Authorization: `Bearer ${cookies.token}` }
             })
             .then((response) => {
                 if (response.status) {
@@ -411,7 +411,7 @@ const Division = () => {
                                 };
                                 axios
                                     .post(`${config.baseUrl}absence/division/create`, body, {
-                                        headers: { Authorization: `Bearer ${cookies.auth.token}`, 'user-audit-id': userAuditId }
+                                        headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
                                     })
                                     .then((response) => {
                                         if (response.status) {
@@ -546,7 +546,7 @@ const Division = () => {
                                 };
                                 axios
                                     .put(`${config.baseUrl}absence/division/update/${item.divisionId}`, body, {
-                                        headers: { Authorization: `Bearer ${cookies.auth.token}`, 'user-audit-id': userAuditId }
+                                        headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
                                     })
                                     .then((response) => {
                                         if (response.status) {

@@ -6,27 +6,38 @@ import { useSelector } from 'react-redux';
 // material-ui
 import { useTheme, styled } from '@mui/material/styles';
 import {
+    Alert,
     Avatar,
     Box,
+    Button,
     Card,
     CardContent,
     Chip,
+    CircularProgress,
     ClickAwayListener,
     Divider,
+    FormControl,
+    FormHelperText,
     Grid,
+    IconButton,
     InputAdornment,
+    InputLabel,
     List,
     ListItem,
     ListItemButton,
     ListItemIcon,
     ListItemText,
     MenuItem,
+    Modal,
     OutlinedInput,
     Paper,
     Popper,
     Select,
+    Slide,
+    Snackbar,
     Stack,
     Switch,
+    TextField,
     ToggleButton,
     ToggleButtonGroup,
     Typography
@@ -44,6 +55,12 @@ import User1 from 'assets/images/users/user-round.svg';
 // assets
 import { IconLogout, IconSearch, IconSettings, IconUser } from '@tabler/icons';
 import { useCookies } from 'react-cookie';
+import axios from 'axios';
+import config from 'config';
+import { Formik } from 'formik';
+import AnimateButton from 'ui-component/extended/AnimateButton';
+import * as Yup from 'yup';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 const CardWrapper = styled(Card)(({ theme }) => ({
     overflow: 'hidden',
@@ -70,6 +87,20 @@ const CardWrapper = styled(Card)(({ theme }) => ({
     }
 }));
 
+const modalStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 800,
+    height: 500,
+    bgcolor: 'background.paper',
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+    overflowY: 'scroll'
+};
+
 // ==============================|| PROFILE MENU ||============================== //
 
 const ProfileSection = () => {
@@ -83,13 +114,46 @@ const ProfileSection = () => {
     const [notification, setNotification] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const [open, setOpen] = useState(false);
-    const [cookies, setCookies] = useCookies();
+    const [cookies, setCookies, removeCookies] = useCookies();
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [responseMessage, setResponseMessage] = useState('');
+    const [responseStatus, setResponseStatus] = useState('success');
+    const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+    const [disableSubmit, setDisableSubmit] = useState(false);
+    const [showOldPassword, setShowOldPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showVerifyPassword, setShowVerifyPassword] = useState(false);
     /**
      * anchorRef is used on different componets and specifying one type leads to other components throwing an error
      * */
     const anchorRef = useRef(null);
+
+    const handleSnackbarClose = () => {
+        setSnackbarOpen(false);
+    };
+
     const handleLogout = async () => {
-        console.log('Logout');
+        axios
+            .get(`${config.baseUrl}auth/user/logout`, {
+                headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': cookies.userId }
+            })
+            .catch((error) => {
+                console.log(error);
+            })
+            .then((response) => {
+                if (response.status === 200) {
+                    navigate('/login');
+                    localStorage.clear();
+                    removeCookies('auth');
+                    removeCookies('role');
+                    removeCookies('roles');
+                    removeCookies('division');
+                } else {
+                    setResponseStatus(response.data.status);
+                    setResponseMessage(response.data.message);
+                    setSnackbarOpen(true);
+                }
+            });
     };
 
     const handleChangeRole = (event) => {
@@ -118,6 +182,31 @@ const ProfileSection = () => {
     };
     const handleToggle = () => {
         setOpen((prevOpen) => !prevOpen);
+    };
+
+    const handleChangePasswordOpen = () => {
+        handleClose(false);
+        setChangePasswordOpen(true);
+    };
+
+    const handleChangePasswordClose = () => {
+        setChangePasswordOpen(false);
+    };
+
+    const handleClickShowOldPassword = () => {
+        setShowOldPassword(!showOldPassword);
+    };
+
+    const handleClickShowNewPassword = () => {
+        setShowNewPassword(!showNewPassword);
+    };
+
+    const handleClickShowVerifyPassword = () => {
+        setShowVerifyPassword(!showVerifyPassword);
+    };
+
+    const handleMouseDownPassword = (event) => {
+        event.preventDefault();
     };
 
     const prevOpen = useRef(open);
@@ -153,7 +242,7 @@ const ProfileSection = () => {
                 }}
                 icon={
                     <Avatar
-                        src={User1}
+                        src={`data:image/jpeg;image/png;image/jpg;base64,${localStorage.getItem('photo')}`}
                         sx={{
                             ...theme.typography.mediumAvatar,
                             margin: '8px 0 8px 8px !important',
@@ -209,12 +298,12 @@ const ProfileSection = () => {
                                                         fontSize={15}
                                                         sx={{ fontWeight: 400 }}
                                                     >
-                                                        {cookies.auth.employeeName}
+                                                        {cookies.employeeName}
                                                     </Typography>
                                                 </Stack>
                                             </Stack>
                                             <Chip
-                                                label={cookies.role}
+                                                label={cookies.jobTitle?.jobTitleName}
                                                 size="small"
                                                 sx={{
                                                     bgcolor: theme.palette.primary.dark,
@@ -248,20 +337,22 @@ const ProfileSection = () => {
                                                     value={cookies.role}
                                                     onChange={handleChangeRole}
                                                 >
-                                                    <ToggleButton value="HRD">HRD</ToggleButton>
-                                                    <ToggleButton value="Employee">Employee</ToggleButton>
-                                                    <ToggleButton value="Supervisor">Supervisor</ToggleButton>
+                                                    {cookies.roles.map((item) => (
+                                                        <ToggleButton id={item} value={item}>
+                                                            {item}
+                                                        </ToggleButton>
+                                                    ))}
                                                 </ToggleButtonGroup>
                                             </ListItem>
                                             <ListItemButton
                                                 sx={{ borderRadius: `${customization.borderRadius}px` }}
                                                 selected={selectedIndex === 0}
-                                                onClick={(event) => handleListItemClick(event, 0, '/user/account-profile/profile1')}
+                                                onClick={handleChangePasswordOpen}
                                             >
                                                 <ListItemIcon>
                                                     <IconSettings stroke={1.5} size="1.3rem" />
                                                 </ListItemIcon>
-                                                <ListItemText primary={<Typography variant="body2">Account Settings</Typography>} />
+                                                <ListItemText primary={<Typography variant="body2">Change Password</Typography>} />
                                             </ListItemButton>
                                             <ListItemButton
                                                 sx={{ borderRadius: `${customization.borderRadius}px` }}
@@ -281,6 +372,165 @@ const ProfileSection = () => {
                     </Transitions>
                 )}
             </Popper>
+            <Modal
+                id="change-password"
+                open={changePasswordOpen}
+                onClose={handleChangePasswordClose}
+                aria-labelledby="parent-modal-title"
+                aria-describedby="parent-modal-description"
+            >
+                <MainCard sx={modalStyle} title="Change Password">
+                    <Formik
+                        initialValues={{
+                            oldPassword: '',
+                            newPassword: '',
+                            verifyPassword: ''
+                        }}
+                        validationSchema={Yup.object().shape({})}
+                        onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {}}
+                    >
+                        {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => (
+                            <form noValidate onSubmit={handleSubmit}>
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12}>
+                                        <FormControl
+                                            fullWidth
+                                            error={Boolean(touched.oldPassword && errors.oldPassword)}
+                                            sx={{ ...theme.typography.customInput }}
+                                        >
+                                            <InputLabel htmlFor="outlined-adornment-password-login">Old Password</InputLabel>
+                                            <OutlinedInput
+                                                id="outlined-adornment-password-login"
+                                                type={showOldPassword ? 'text' : 'password'}
+                                                value={values.oldPassword}
+                                                name="oldPassword"
+                                                onBlur={handleBlur}
+                                                onChange={handleChange}
+                                                endAdornment={
+                                                    <InputAdornment position="end">
+                                                        <IconButton
+                                                            aria-label="toggle password visibility"
+                                                            onClick={handleClickShowOldPassword}
+                                                            onMouseDown={handleMouseDownPassword}
+                                                            edge="end"
+                                                            size="large"
+                                                        >
+                                                            {showOldPassword ? <Visibility /> : <VisibilityOff />}
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                }
+                                                label="Old Password"
+                                                inputProps={{}}
+                                            />
+                                            {touched.oldPassword && errors.oldPassword && (
+                                                <FormHelperText error id="standard-weight-helper-text-password-login">
+                                                    {errors.oldPassword}
+                                                </FormHelperText>
+                                            )}
+                                        </FormControl>
+                                        <FormControl
+                                            fullWidth
+                                            error={Boolean(touched.newPassword && errors.newPassword)}
+                                            sx={{ ...theme.typography.customInput }}
+                                        >
+                                            <InputLabel htmlFor="outlined-adornment-password-login">New Password</InputLabel>
+                                            <OutlinedInput
+                                                id="outlined-adornment-password-login"
+                                                type={showNewPassword ? 'text' : 'password'}
+                                                value={values.newPassword}
+                                                name="newPassword"
+                                                onBlur={handleBlur}
+                                                onChange={handleChange}
+                                                endAdornment={
+                                                    <InputAdornment position="end">
+                                                        <IconButton
+                                                            aria-label="toggle password visibility"
+                                                            onClick={handleClickShowNewPassword}
+                                                            onMouseDown={handleMouseDownPassword}
+                                                            edge="end"
+                                                            size="large"
+                                                        >
+                                                            {showNewPassword ? <Visibility /> : <VisibilityOff />}
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                }
+                                                label="New Password"
+                                                inputProps={{}}
+                                            />
+                                            {touched.newPassword && errors.newPassword && (
+                                                <FormHelperText error id="standard-weight-helper-text-password-login">
+                                                    {errors.newPassword}
+                                                </FormHelperText>
+                                            )}
+                                        </FormControl>
+                                        <FormControl
+                                            fullWidth
+                                            error={Boolean(touched.verifyPassword && errors.verifyPassword)}
+                                            sx={{ ...theme.typography.customInput }}
+                                        >
+                                            <InputLabel htmlFor="outlined-adornment-password-login">Verify Password</InputLabel>
+                                            <OutlinedInput
+                                                id="outlined-adornment-password-login"
+                                                type={showVerifyPassword ? 'text' : 'password'}
+                                                value={values.verifyPassword}
+                                                name="verifyPassword"
+                                                onBlur={handleBlur}
+                                                onChange={handleChange}
+                                                endAdornment={
+                                                    <InputAdornment position="end">
+                                                        <IconButton
+                                                            aria-label="toggle password visibility"
+                                                            onClick={handleClickShowVerifyPassword}
+                                                            onMouseDown={handleMouseDownPassword}
+                                                            edge="end"
+                                                            size="large"
+                                                        >
+                                                            {showVerifyPassword ? <Visibility /> : <VisibilityOff />}
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                }
+                                                label="Password"
+                                                inputProps={{}}
+                                            />
+                                            {touched.verifyPassword && errors.verifyPassword && (
+                                                <FormHelperText error id="standard-weight-helper-text-password-login">
+                                                    {errors.verifyPassword}
+                                                </FormHelperText>
+                                            )}
+                                        </FormControl>
+                                    </Grid>
+                                </Grid>
+                                <Box sx={{ mt: 2 }}>
+                                    <AnimateButton>
+                                        <Button
+                                            disableElevation
+                                            disabled={disableSubmit}
+                                            fullWidth
+                                            size="large"
+                                            type="submit"
+                                            variant="contained"
+                                            color="primary"
+                                        >
+                                            {disableSubmit ? <CircularProgress size="1.5rem" color="primary" /> : 'Submit'}
+                                        </Button>
+                                    </AnimateButton>
+                                </Box>
+                            </form>
+                        )}
+                    </Formik>
+                </MainCard>
+            </Modal>
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={3000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                TransitionComponent={Slide}
+            >
+                <Alert onClose={handleSnackbarClose} severity={responseStatus} sx={{ width: '100%' }}>
+                    {responseMessage}
+                </Alert>
+            </Snackbar>
         </>
     );
 };
