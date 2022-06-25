@@ -11,6 +11,7 @@ const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')))
 // master data routing
 const Employee = Loadable(lazy(() => import('views/employee')));
 const Division = Loadable(lazy(() => import('views/division')));
+const JobTitle = Loadable(lazy(() => import('views/job-title')));
 const Holiday = Loadable(lazy(() => import('views/holiday')));
 const LeaveType = Loadable(lazy(() => import('views/leave-type')));
 const Project = Loadable(lazy(() => import('views/project')));
@@ -27,6 +28,7 @@ const Timesheet = Loadable(lazy(() => import('views/timesheet')));
 const LeaveSubmission = Loadable(lazy(() => import('views/leave-submission')));
 const HistoryLeave = Loadable(lazy(() => import('views/history-leave')));
 const LeaveApprovalSupervisor = Loadable(lazy(() => import('views/leave-approval-supervisor')));
+const LeaveApprovalHrd = Loadable(lazy(() => import('views/leave-approval-hrd')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -45,6 +47,10 @@ const MainRoutes = {
         {
             path: '/master-data/division',
             element: <Division />
+        },
+        {
+            path: '/master-data/job-title',
+            element: <JobTitle />
         },
         {
             path: '/master-data/holiday',
@@ -93,6 +99,10 @@ const MainRoutes = {
         {
             path: '/leave-approval-supervisor',
             element: <LeaveApprovalSupervisor />
+        },
+        {
+            path: '/leave-approval-hrd',
+            element: <LeaveApprovalHrd />
         }
     ]
 };

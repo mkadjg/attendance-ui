@@ -72,6 +72,7 @@ import User1 from 'assets/images/users/user-round.svg';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import AnimateButton from 'ui-component/extended/AnimateButton';
+import MUIDataTable from 'mui-datatables';
 
 // styles
 const OutlineInputStyle = styled(OutlinedInput, { shouldForwardProp })(({ theme }) => ({
@@ -238,12 +239,12 @@ const Project = () => {
     useEffect(() => {
         getListData();
     }, []);
-    const actions = (row) => (
+    const actions = (index) => (
         <>
             <Tooltip title="Detail">
                 <IconButton
                     onClick={() => {
-                        handleDetailOpen(row);
+                        handleDetailOpen(data[index]);
                     }}
                     color="secondary"
                     size="small"
@@ -256,7 +257,7 @@ const Project = () => {
             <Tooltip title="Edit">
                 <IconButton
                     onClick={() => {
-                        handleEditOpen(row);
+                        handleEditOpen(data[index]);
                     }}
                     color="success"
                     size="small"
@@ -269,7 +270,7 @@ const Project = () => {
             <Tooltip title="Delete">
                 <IconButton
                     onClick={() => {
-                        handleDeleteOpen(row);
+                        handleDeleteOpen(data[index]);
                     }}
                     color="error"
                     size="small"
@@ -282,74 +283,52 @@ const Project = () => {
         </>
     );
 
-    const SearchSection = () => {
-        const theme = useTheme();
-        const [value, setValue] = useState('');
-
-        return (
-            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                <Tooltip title="Add">
-                    <IconButton
-                        onClick={() => {
-                            handleCreateOpen();
-                        }}
-                        color="primary"
-                        size="small"
-                        disableRipple
-                        style={{ backgroundColor: '#E3F2FD', margin: 2 }}
-                    >
-                        <IconPlus />
-                    </IconButton>
-                </Tooltip>
-                <OutlineInputStyle
-                    id="input-search-header"
-                    value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    placeholder="Search"
-                    startAdornment={
-                        <InputAdornment position="start">
-                            <IconSearch stroke={1.5} size="1rem" color={theme.palette.grey[500]} />
-                        </InputAdornment>
-                    }
-                    endAdornment={
-                        <InputAdornment position="end">
-                            <ButtonBase sx={{ borderRadius: '12px' }}>
-                                <HeaderAvatarStyle variant="rounded">
-                                    <IconAdjustmentsHorizontal stroke={1.5} size="1.3rem" />
-                                </HeaderAvatarStyle>
-                            </ButtonBase>
-                        </InputAdornment>
-                    }
-                    aria-describedby="search-helper-text"
-                    inputProps={{ 'aria-label': 'weight' }}
-                />
-            </Box>
-        );
-    };
+    const AddSection = () => (
+        <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+            <Tooltip title="Add">
+                <IconButton
+                    onClick={() => {
+                        handleCreateOpen();
+                    }}
+                    color="primary"
+                    size="small"
+                    disableRipple
+                    style={{ backgroundColor: '#E3F2FD', margin: 2 }}
+                >
+                    <IconPlus />
+                </IconButton>
+            </Tooltip>
+        </Box>
+    );
 
     const columns = [
         {
-            name: 'Project Name',
-            selector: (row) => row.projectName
+            label: 'Project Name',
+            name: 'projectName'
         },
         {
-            name: 'Description',
-            selector: (row) => row.projectDesc
-        },
-        {
-            name: 'Division',
-            selector: (row) => row.division?.divisionName
+            label: 'Description',
+            name: 'projectDesc'
         },
         {
             name: 'Action',
-            width: '200px',
-            selector: (row) => actions(row)
+            options: {
+                customBodyRenderLite: (dataIndex, rowIndex) => actions(rowIndex)
+            }
         }
     ];
 
+    const options = {
+        download: false,
+        filter: false,
+        print: false,
+        selectableRowsHeader: false,
+        selectableRowsHideCheckboxes: true
+    };
+
     return (
-        <MainCard title="Project" secondary={<SearchSection />}>
-            <DataTable columns={columns} data={data} responsive="true" pagination />
+        <MainCard title="Project" secondary={<AddSection />}>
+            <MUIDataTable columns={columns} data={data} options={options} />
             <Modal
                 id="detail"
                 open={detailOpen}

@@ -159,13 +159,8 @@ const FormLeave = () => {
         return startDate;
     };
     const [startDate, setStartDate] = useState(getStartDate);
-    const getEndDate = () => {
-        const endDate = new Date();
-        endDate.setDate(getStartDate().getDate() + 1);
-        return endDate;
-    };
     const [cookies, setCookie] = useCookies(['user']);
-    const [endDate, setEndDate] = useState(getEndDate);
+    const [endDate, setEndDate] = useState(startDate);
     const [subPartnerId, setSubPartnerId] = useState('');
     const [leaveTypeId, setLeaveTypeId] = useState('');
     const [description, setDescription] = useState({ html: '', text: '' });
@@ -210,12 +205,12 @@ const FormLeave = () => {
             });
     };
 
-    const validateTotalDaysOff = (newEndDate) => {
+    const validateTotalDaysOff = (newStartDate, newEndDate) => {
         axios
             .get(
                 `${
                     config.baseUrl
-                }absence/leave/validate-total-days?startDate=${startDate.toDateString()}&endDate=${newEndDate.toDateString()}`,
+                }absence/leave/validate-total-days?startDate=${newStartDate.toDateString()}&endDate=${newEndDate.toDateString()}`,
                 {
                     headers: { Authorization: `Bearer ${cookies.token}` }
                 }
@@ -260,7 +255,7 @@ const FormLeave = () => {
 
     const clearForm = () => {
         setStartDate(getStartDate());
-        setEndDate(getEndDate);
+        setEndDate(getStartDate());
         setDescription({ html: '', text: '' });
         setSubPartnerId('');
         setTotalDaysOff(0);
@@ -300,16 +295,14 @@ const FormLeave = () => {
                         setSnackbarOpen(true);
                         handleDialogClose();
                         setDisableSubmit(false);
-                        clearForm();
                     }
                 })
                 .catch((error) => {
-                    setResponseStatus('error');
-                    setResponseMessage('Oops Internal Server Error!');
+                    setResponseStatus(error.response.data.status);
+                    setResponseMessage(error.response.data.message);
                     setSnackbarOpen(true);
                     handleDialogClose();
                     setDisableSubmit(false);
-                    clearForm();
                 });
         } catch (err) {
             setResponseStatus('error');
@@ -317,7 +310,6 @@ const FormLeave = () => {
             setSnackbarOpen(true);
             handleDialogClose();
             setDisableSubmit(false);
-            clearForm();
         }
     };
 
@@ -325,6 +317,7 @@ const FormLeave = () => {
         getSubPartner();
         getLeaveType();
         getEmployeeLeave();
+        validateTotalDaysOff(startDate, endDate);
     }, []);
 
     return (
@@ -425,6 +418,7 @@ const FormLeave = () => {
                                                     value={startDate}
                                                     onChange={(newValue) => {
                                                         setStartDate(newValue);
+                                                        validateTotalDaysOff(newValue, endDate);
                                                     }}
                                                     minDate={getStartDate()}
                                                     renderInput={(params) => <TextField {...params} />}
@@ -438,9 +432,9 @@ const FormLeave = () => {
                                                     value={endDate}
                                                     onChange={(newValue) => {
                                                         setEndDate(newValue);
-                                                        validateTotalDaysOff(newValue);
+                                                        validateTotalDaysOff(startDate, newValue);
                                                     }}
-                                                    minDate={getEndDate()}
+                                                    minDate={startDate}
                                                     renderInput={(params) => <TextField {...params} />}
                                                 />
                                             </LocalizationProvider>

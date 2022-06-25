@@ -36,6 +36,7 @@ import {
     DialogContentText,
     Snackbar,
     Alert,
+    Slide,
     CircularProgress
 } from '@mui/material';
 import DataTable from 'react-data-table-component-with-filter';
@@ -71,7 +72,6 @@ import User1 from 'assets/images/users/user-round.svg';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import AnimateButton from 'ui-component/extended/AnimateButton';
-import Slide from '@mui/material/Slide';
 import MUIDataTable from 'mui-datatables';
 
 // styles
@@ -119,7 +119,7 @@ const modalStyle = {
     overflowY: 'scroll'
 };
 
-const Division = () => {
+const JobTitle = () => {
     const [cookies, setCookie] = useCookies(['user']);
     const [data, setData] = useState([]);
     const [detailOpen, setDetailOpen] = useState(Boolean);
@@ -132,9 +132,23 @@ const Division = () => {
     const [responseMessage, setResponseMessage] = useState('');
     const [responseStatus, setResponseStatus] = useState('success');
     const [disableSubmit, setDisableSubmit] = useState(false);
+    const [division, setDivision] = useState([]);
     const theme = useTheme();
 
     const getListData = () => {
+        axios
+            .get(`${config.baseUrl}absence/job-title/find-all`, { headers: { Authorization: `Bearer ${cookies.token}` } })
+            .catch((error) => {
+                console.log(error);
+            })
+            .then((response) => {
+                if (response.status === 200) {
+                    setData(response.data.data);
+                }
+            });
+    };
+
+    const getDivisionListData = () => {
         axios
             .get(`${config.baseUrl}absence/division/find-all`, { headers: { Authorization: `Bearer ${cookies.token}` } })
             .catch((error) => {
@@ -142,7 +156,7 @@ const Division = () => {
             })
             .then((response) => {
                 if (response.status === 200) {
-                    setData(response.data.data);
+                    setDivision(response.data.data);
                 }
             });
     };
@@ -162,6 +176,7 @@ const Division = () => {
     };
 
     const handleCreateOpen = () => {
+        getDivisionListData();
         setCreateOpen(true);
     };
 
@@ -171,6 +186,7 @@ const Division = () => {
     };
 
     const handleEditOpen = (row) => {
+        getDivisionListData();
         setItem(row);
         setEditOpen(true);
     };
@@ -190,9 +206,9 @@ const Division = () => {
         setDeleteOpen(false);
     };
 
-    const deleteDivision = () => {
+    const deleteProject = () => {
         axios
-            .delete(`${config.baseUrl}absence/division/delete/${item.divisionId}`, {
+            .delete(`${config.baseUrl}absence/job-title/delete/${item.jobTitleId}`, {
                 headers: { Authorization: `Bearer ${cookies.token}` }
             })
             .then((response) => {
@@ -287,12 +303,12 @@ const Division = () => {
 
     const columns = [
         {
-            label: 'Division Name',
-            name: 'divisionName'
+            label: 'Project Name',
+            name: 'jobTitleName'
         },
         {
-            label: 'Description',
-            name: 'divisionDesc'
+            label: 'Division Name',
+            name: 'divisionName'
         },
         {
             name: 'Action',
@@ -311,7 +327,7 @@ const Division = () => {
     };
 
     return (
-        <MainCard title="Division" secondary={<AddSection />}>
+        <MainCard title="Project" secondary={<AddSection />}>
             <MUIDataTable columns={columns} data={data} options={options} />
             <Modal
                 id="detail"
@@ -328,7 +344,7 @@ const Division = () => {
                                     <ListItemText
                                         primary={
                                             <Typography variant="subtitle1" fontSize={18}>
-                                                Division Detail
+                                                Job Title Detail
                                             </Typography>
                                         }
                                     />
@@ -347,8 +363,8 @@ const Division = () => {
                                         </IconButton>
                                     </ListItemAvatar>
                                     <ListItemText
-                                        primary="Division Name"
-                                        secondary={item.divisionName === null ? '-' : item.divisionName}
+                                        primary="Job Title Name"
+                                        secondary={item.jobTitleName === null ? '-' : item.jobTitleName}
                                     />
                                 </ListItem>
                             </List>
@@ -358,10 +374,10 @@ const Division = () => {
                                 <ListItem>
                                     <ListItemAvatar>
                                         <IconButton color="secondary" size="medium" disableRipple style={{ backgroundColor: '#EDE7F6' }}>
-                                            <IconNotes />
+                                            <IconBuildingSkyscraper />
                                         </IconButton>
                                     </ListItemAvatar>
-                                    <ListItemText primary="Description" secondary={item.divisionDesc === null ? '-' : item.divisionDesc} />
+                                    <ListItemText primary="Division" secondary={item.divisionName === null ? '-' : item.divisionName} />
                                 </ListItem>
                             </List>
                         </Grid>
@@ -375,42 +391,36 @@ const Division = () => {
                 aria-labelledby="parent-modal-title"
                 aria-describedby="parent-modal-description"
             >
-                <MainCard sx={modalStyle} title="Add New Division">
+                <MainCard sx={modalStyle} title="Add New Job Title">
                     <Formik
                         initialValues={{
-                            divisionName: '',
-                            divisionDesc: '',
-                            isSubmitting: false
+                            jobTitleName: '',
+                            jobTitleDesc: '',
+                            divisionId: 0
                         }}
                         validationSchema={Yup.object().shape({
-                            divisionName: Yup.string().max(255).required('Division Name is required')
+                            jobTitleName: Yup.string().max(255).required('Project Name is required'),
+                            divisionId: Yup.string().max(255).required('Division Id is required')
                         })}
                         onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
                             try {
                                 setDisableSubmit(true);
                                 const body = {
-                                    divisionName: values.divisionName,
-                                    divisionDesc: values.divisionDesc
+                                    jobTitleName: values.jobTitleName,
+                                    jobTitleDesc: values.jobTitleDesc,
+                                    divisionId: values.divisionId
                                 };
                                 axios
-                                    .post(`${config.baseUrl}absence/division/create`, body, {
+                                    .post(`${config.baseUrl}absence/job-title/create`, body, {
                                         headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
                                     })
                                     .then((response) => {
-                                        if (response.status) {
-                                            setResponseStatus(response.data.status);
-                                            setResponseMessage(response.data.message);
-                                            setSnackbarOpen(true);
-                                            handleCreateClose();
-                                            getListData();
-                                            setDisableSubmit(false);
-                                        } else {
-                                            setResponseStatus('error');
-                                            setResponseMessage('Oops Internal Server Error!');
-                                            setSnackbarOpen(true);
-                                            handleCreateClose();
-                                            setDisableSubmit(false);
-                                        }
+                                        setResponseStatus(response.data.status);
+                                        setResponseMessage(response.data.message);
+                                        setSnackbarOpen(true);
+                                        handleCreateClose();
+                                        getListData();
+                                        setDisableSubmit(false);
                                     })
                                     .catch((error) => {
                                         setResponseStatus('error');
@@ -424,7 +434,6 @@ const Division = () => {
                                 setResponseMessage('Oops Internal Server Error!');
                                 setSnackbarOpen(true);
                                 handleCreateClose();
-                                getListData();
                                 setDisableSubmit(false);
                             }
                         }}
@@ -435,22 +444,22 @@ const Division = () => {
                                     <Grid item xs={6}>
                                         <FormControl
                                             fullWidth
-                                            error={Boolean(touched.divisionName && errors.divisionName)}
+                                            error={Boolean(touched.jobTitleName && errors.jobTitleName)}
                                             style={{ marginBottom: 18 }}
                                         >
                                             <TextField
-                                                id="division-name"
+                                                id="job-title-name"
                                                 type="text"
-                                                value={values.divisionName}
-                                                name="divisionName"
+                                                value={values.jobTitleName}
+                                                name="jobTitleName"
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
-                                                label="Division Name*"
+                                                label="Job Title Name*"
                                                 inputProps={{}}
                                             />
-                                            {touched.divisionName && errors.divisionName && (
-                                                <FormHelperText error id="standard-weight-helper-text-division-name">
-                                                    {errors.divisionName}
+                                            {touched.jobTitleName && errors.jobTitleName && (
+                                                <FormHelperText error id="standard-weight-helper-text-jobTitle-name">
+                                                    {errors.jobTitleName}
                                                 </FormHelperText>
                                             )}
                                         </FormControl>
@@ -458,24 +467,28 @@ const Division = () => {
                                     <Grid item xs={6}>
                                         <FormControl
                                             fullWidth
-                                            error={Boolean(touched.divisionDesc && errors.divisionDesc)}
+                                            error={Boolean(touched.divisionId && errors.divisionId)}
                                             style={{ marginBottom: 18 }}
                                         >
-                                            <TextField
-                                                id="division-desc"
-                                                value={values.divisionDesc}
-                                                type="text"
-                                                name="divisionDesc"
-                                                label="Division Desc"
+                                            <InputLabel htmlFor="division-id">Division*</InputLabel>
+                                            <Select
+                                                id="division-id"
+                                                value={values.divisionId}
+                                                name="divisionId"
+                                                label="Division*"
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
                                                 inputProps={{}}
-                                                multiline
-                                                rows={3}
-                                            />
-                                            {touched.divisionDesc && errors.divisionDesc && (
-                                                <FormHelperText error id="standard-weight-helper-text-division-desc">
-                                                    {errors.divisionDesc}
+                                            >
+                                                {division.map((item, index) => (
+                                                    <MenuItem id={`create${index}`} value={item.divisionId}>
+                                                        {item.divisionName}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                            {touched.divisionId && errors.divisionId && (
+                                                <FormHelperText error id="standard-weight-helper-text-division-id">
+                                                    {errors.divisionId}
                                                 </FormHelperText>
                                             )}
                                         </FormControl>
@@ -514,38 +527,37 @@ const Division = () => {
                 aria-labelledby="parent-modal-title"
                 aria-describedby="parent-modal-description"
             >
-                <MainCard sx={modalStyle} title="Edit Data Division">
+                <MainCard sx={modalStyle} title="Edit Data Job Title">
                     <Formik
-                        initialValues={item}
+                        initialValues={{
+                            jobTitleId: item.jobTitleId,
+                            jobTitleName: item.jobTitleName,
+                            jobTitleDesc: item.jobTitleDesc,
+                            divisionId: item.division?.divisionId
+                        }}
                         validationSchema={Yup.object().shape({
-                            divisionName: Yup.string().max(255).required('Division Name is required')
+                            jobTitleName: Yup.string().max(255).required('Project Name is required'),
+                            divisionId: Yup.string().max(255).required('Division is required')
                         })}
                         onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
                             try {
                                 setDisableSubmit(true);
                                 const body = {
-                                    divisionName: values.divisionName,
-                                    divisionDesc: values.divisionDesc
+                                    jobTitleName: values.jobTitleName,
+                                    jobTitleDesc: values.jobTitleDesc,
+                                    divisionId: values.divisionId
                                 };
                                 axios
-                                    .put(`${config.baseUrl}absence/division/update/${item.divisionId}`, body, {
+                                    .put(`${config.baseUrl}absence/job-title/update/${item.jobTitleId}`, body, {
                                         headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
                                     })
                                     .then((response) => {
-                                        if (response.status) {
-                                            setResponseStatus(response.data.status);
-                                            setResponseMessage(response.data.message);
-                                            setSnackbarOpen(true);
-                                            handleEditClose();
-                                            getListData();
-                                            setDisableSubmit(false);
-                                        } else {
-                                            setResponseStatus('error');
-                                            setResponseMessage('Oops Internal Server Error!');
-                                            setSnackbarOpen(true);
-                                            handleEditClose();
-                                            setDisableSubmit(false);
-                                        }
+                                        setResponseStatus(response.data.status);
+                                        setResponseMessage(response.data.message);
+                                        setSnackbarOpen(true);
+                                        handleEditClose();
+                                        getListData();
+                                        setDisableSubmit(false);
                                     })
                                     .catch((error) => {
                                         setResponseStatus('error');
@@ -559,7 +571,6 @@ const Division = () => {
                                 setResponseMessage('Oops Internal Server Error!');
                                 setSnackbarOpen(true);
                                 handleEditClose();
-                                getListData();
                                 setDisableSubmit(false);
                             }
                         }}
@@ -570,22 +581,22 @@ const Division = () => {
                                     <Grid item xs={6}>
                                         <FormControl
                                             fullWidth
-                                            error={Boolean(touched.divisionName && errors.divisionName)}
+                                            error={Boolean(touched.jobTitleName && errors.jobTitleName)}
                                             style={{ marginBottom: 18 }}
                                         >
                                             <TextField
-                                                id="division-name"
+                                                id="jobTitle-name"
                                                 type="text"
-                                                value={values.divisionName}
-                                                name="divisionName"
+                                                value={values.jobTitleName}
+                                                name="jobTitleName"
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
-                                                label="Division Name*"
+                                                label="Job Title Name*"
                                                 inputProps={{}}
                                             />
-                                            {touched.divisionName && errors.divisionName && (
-                                                <FormHelperText error id="standard-weight-helper-text-division-name">
-                                                    {errors.divisionName}
+                                            {touched.jobTitleName && errors.jobTitleName && (
+                                                <FormHelperText error id="standard-weight-helper-text-jobTitle-name">
+                                                    {errors.jobTitleName}
                                                 </FormHelperText>
                                             )}
                                         </FormControl>
@@ -593,24 +604,28 @@ const Division = () => {
                                     <Grid item xs={6}>
                                         <FormControl
                                             fullWidth
-                                            error={Boolean(touched.divisionDesc && errors.divisionDesc)}
+                                            error={Boolean(touched.divisionId && errors.divisionId)}
                                             style={{ marginBottom: 18 }}
                                         >
-                                            <TextField
-                                                id="division-desc"
-                                                value={values.divisionDesc}
-                                                type="text"
-                                                name="divisionDesc"
-                                                label="Division Desc"
+                                            <InputLabel htmlFor="division-id">Division*</InputLabel>
+                                            <Select
+                                                id="division-id"
+                                                value={values.divisionId}
+                                                name="divisionId"
+                                                label="Division*"
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
                                                 inputProps={{}}
-                                                multiline
-                                                rows={3}
-                                            />
-                                            {touched.divisionDesc && errors.divisionDesc && (
-                                                <FormHelperText error id="standard-weight-helper-text-division-desc">
-                                                    {errors.divisionDesc}
+                                            >
+                                                {division.map((item, index) => (
+                                                    <MenuItem id={`create${index}`} value={item.divisionId}>
+                                                        {item.divisionName}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                            {touched.divisionId && errors.divisionId && (
+                                                <FormHelperText error id="standard-weight-helper-text-division-id">
+                                                    {errors.divisionId}
                                                 </FormHelperText>
                                             )}
                                         </FormControl>
@@ -626,7 +641,7 @@ const Division = () => {
                                     <AnimateButton>
                                         <Button
                                             disableElevation
-                                            disabled={isSubmitting}
+                                            disabled={disableSubmit}
                                             fullWidth
                                             size="large"
                                             type="submit"
@@ -649,16 +664,16 @@ const Division = () => {
                 aria-describedby="alert-dialog-description"
             >
                 <DialogTitle fontSize={16} id="alert-dialog-title">
-                    Delete Division Confirmation
+                    Delete Job Title Confirmation
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText id="alert-dialog-description">
-                        {`Are you sure want to delete ${item.divisionName} division ?`}
+                        {`Are you sure want to delete ${item.jobTitleName} job title ?`}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleDeleteClose}>No</Button>
-                    <Button onClick={deleteDivision} autoFocus>
+                    <Button onClick={deleteProject} autoFocus>
                         Yes
                     </Button>
                 </DialogActions>
@@ -678,4 +693,4 @@ const Division = () => {
     );
 };
 
-export default Division;
+export default JobTitle;

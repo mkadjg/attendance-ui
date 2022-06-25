@@ -1,8 +1,8 @@
 // assets
-import { IconFileCheck, IconDashboard, IconUsers, IconCalendar, IconBuildingSkyscraper, IconFolder } from '@tabler/icons';
+import { IconFileCheck, IconDashboard, IconUsers, IconCalendar, IconBuildingSkyscraper, IconFolder, IconBriefcase } from '@tabler/icons';
 
 // constant
-const icons = { IconFileCheck, IconDashboard, IconUsers, IconCalendar, IconBuildingSkyscraper, IconFolder };
+const icons = { IconFileCheck, IconDashboard, IconUsers, IconCalendar, IconBuildingSkyscraper, IconFolder, IconBriefcase };
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
@@ -28,10 +28,10 @@ const hrd = [
         type: 'group',
         children: [
             {
-                id: 'leave-submission',
-                title: 'Leave Submission',
+                id: 'leave-approval-hrd',
+                title: 'Leave Approval',
                 type: 'item',
-                url: '/leave-submission',
+                url: '/leave-approval-hrd',
                 icon: icons.IconFileCheck,
                 breadcrumbs: false
             }
@@ -56,6 +56,14 @@ const hrd = [
                 type: 'item',
                 url: '/master-data/division',
                 icon: icons.IconBuildingSkyscraper,
+                breadcrumbs: false
+            },
+            {
+                id: 'job-title',
+                title: 'Job Title',
+                type: 'item',
+                url: '/master-data/job-title',
+                icon: icons.IconBriefcase,
                 breadcrumbs: false
             },
             {

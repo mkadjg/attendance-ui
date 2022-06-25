@@ -67,7 +67,9 @@ import {
     IconFileCheck,
     IconFileText,
     IconTableExport,
-    IconTable
+    IconTable,
+    IconUserX,
+    IconUserOff
 } from '@tabler/icons';
 import { useEffect, useState } from 'react';
 import config from 'config';
@@ -454,13 +456,25 @@ const Timesheet = () => {
                                         </Grid>
                                         <Grid item xs={2}>
                                             {item.attendanceType.attendanceTypeName === 'Present' && (
-                                                <Chip label="Present" style={{ backgroundColor: '#00C853', color: '#fff' }} />
+                                                <Tooltip title="Present">
+                                                    <IconButton>
+                                                        <IconUserCheck style={{ color: '#00C853' }} />
+                                                    </IconButton>
+                                                </Tooltip>
                                             )}
                                             {item.attendanceType.attendanceTypeName === 'Sick' && (
-                                                <Chip label="Sick" style={{ backgroundColor: '#F44336', color: '#fff' }} />
+                                                <Tooltip title="Sick">
+                                                    <IconButton>
+                                                        <IconUserX style={{ color: '#F44336' }} />
+                                                    </IconButton>
+                                                </Tooltip>
                                             )}
                                             {item.attendanceType.attendanceTypeName === 'Leave' && (
-                                                <Chip label="Leave" style={{ backgroundColor: '#673AB7', color: '#fff' }} />
+                                                <Tooltip title="Leave">
+                                                    <IconButton>
+                                                        <IconUserOff style={{ color: '#673AB7' }} />
+                                                    </IconButton>
+                                                </Tooltip>
                                             )}
                                         </Grid>
                                     </Grid>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCookies } from 'react-cookie';
 
 // material-ui
@@ -148,7 +148,6 @@ const FirebaseLogin = ({ ...others }) => {
                                 </FormHelperText>
                             )}
                         </FormControl>
-
                         <FormControl
                             fullWidth
                             error={Boolean(touched.password && errors.password)}
@@ -185,9 +184,11 @@ const FirebaseLogin = ({ ...others }) => {
                             )}
                         </FormControl>
                         <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
-                            <Typography variant="subtitle1" color="primary" sx={{ textDecoration: 'none', cursor: 'pointer' }}>
-                                Forgot Password?
-                            </Typography>
+                            <Link to="/forgot-password">
+                                <Typography variant="subtitle1" color="primary" sx={{ textDecoration: 'none', cursor: 'pointer' }}>
+                                    Forgot Password?
+                                </Typography>
+                            </Link>
                         </Stack>
                         {errors.submit && (
                             <Box sx={{ mt: 3 }}>

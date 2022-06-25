@@ -167,7 +167,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
     }
 }));
 
-const LeaveApprovalSupervisor = () => {
+const LeaveApprovalHrd = () => {
     const [cookies, setCookie] = useCookies(['user']);
     const [year, setYear] = useState(new Date().getUTCFullYear());
     const [leaveSubmissionId, setLeaveSubmissionId] = useState('');
@@ -213,7 +213,7 @@ const LeaveApprovalSupervisor = () => {
 
     const getLeaveApproval = (newYear) => {
         axios
-            .get(`${config.baseUrl}absence/leave/find-all-supervisor?employeeId=${employeeId}&year=${newYear}&divisionId=${divisionId}`, {
+            .get(`${config.baseUrl}absence/leave/find-all-hrd?employeeId=${employeeId}&year=${newYear}&divisionId=${divisionId}`, {
                 headers: { Authorization: `Bearer ${cookies.token}` }
             })
             .catch((error) => {
@@ -229,7 +229,7 @@ const LeaveApprovalSupervisor = () => {
     const approveLeave = () => {
         setDisableSubmit(true);
         axios
-            .get(`${config.baseUrl}absence/leave/approve/supervisor/${leaveSubmissionId}`, {
+            .get(`${config.baseUrl}absence/leave/approve/hrd/${leaveSubmissionId}`, {
                 headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
             })
             .then((response) => {
@@ -262,7 +262,7 @@ const LeaveApprovalSupervisor = () => {
     const rejectLeave = () => {
         setDisableSubmit(true);
         axios
-            .get(`${config.baseUrl}absence/leave/reject/supervisor/${leaveSubmissionId}`, {
+            .get(`${config.baseUrl}absence/leave/reject/hrd/${leaveSubmissionId}`, {
                 headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': userAuditId }
             })
             .then((response) => {
@@ -523,4 +523,4 @@ const LeaveApprovalSupervisor = () => {
     );
 };
 
-export default LeaveApprovalSupervisor;
+export default LeaveApprovalHrd;

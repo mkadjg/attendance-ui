@@ -60,7 +60,8 @@ import {
     IconGlobe,
     IconId,
     IconMap,
-    IconUsers
+    IconUsers,
+    IconBriefcase
 } from '@tabler/icons';
 import { useEffect, useState } from 'react';
 import config from 'config';
@@ -75,6 +76,7 @@ import * as Yup from 'yup';
 import 'yup-phone';
 import AnimateButton from 'ui-component/extended/AnimateButton';
 import { SignalWifiStatusbarNullSharp } from '@mui/icons-material';
+import MUIDataTable from 'mui-datatables';
 
 // styles
 const OutlineInputStyle = styled(OutlinedInput, { shouldForwardProp })(({ theme }) => ({
@@ -125,6 +127,7 @@ const Employee = () => {
     const [cookies, setCookie] = useCookies(['user']);
     const [data, setData] = useState([]);
     const [division, setDivision] = useState([]);
+    const [jobTitle, setJobTitle] = useState([]);
     const [detailOpen, setDetailOpen] = useState(Boolean);
     const [createOpen, setCreateOpen] = useState(Boolean);
     const [editOpen, setEditOpen] = useState(Boolean);
@@ -160,6 +163,19 @@ const Employee = () => {
             .then((response) => {
                 if (response.status === 200) {
                     setDivision(response.data.data);
+                }
+            });
+    };
+
+    const getJobTitleListData = (divisionId) => {
+        axios
+            .get(`${config.baseUrl}absence/job-title/find-all/${divisionId}`, { headers: { Authorization: `Bearer ${cookies.token}` } })
+            .catch((error) => {
+                console.log(error);
+            })
+            .then((response) => {
+                if (response.status === 200) {
+                    setJobTitle(response.data.data);
                 }
             });
     };
@@ -208,6 +224,7 @@ const Employee = () => {
 
     const handleEditOpen = (row) => {
         getDivisionListData();
+        getJobTitleListData(row.jobTitle?.division?.divisionId);
         setItem(row);
         setEmployeePhoto({
             raw: row.employeePhoto,
@@ -268,12 +285,12 @@ const Employee = () => {
     useEffect(() => {
         getListData();
     }, []);
-    const actions = (row) => (
+    const actions = (index) => (
         <>
             <Tooltip title="Detail">
                 <IconButton
                     onClick={() => {
-                        handleDetailOpen(row);
+                        handleDetailOpen(data[index]);
                     }}
                     color="secondary"
                     size="small"
@@ -286,7 +303,7 @@ const Employee = () => {
             <Tooltip title="Edit">
                 <IconButton
                     onClick={() => {
-                        handleEditOpen(row);
+                        handleEditOpen(data[index]);
                     }}
                     color="success"
                     size="small"
@@ -299,7 +316,7 @@ const Employee = () => {
             <Tooltip title="Delete">
                 <IconButton
                     onClick={() => {
-                        handleDeleteOpen(row);
+                        handleDeleteOpen(data[index]);
                     }}
                     color="error"
                     size="small"
@@ -312,82 +329,62 @@ const Employee = () => {
         </>
     );
 
-    const SearchSection = () => {
-        const theme = useTheme();
-        const [value, setValue] = useState('');
+    const gender = ['Laki - Laki', 'Perempuan'];
 
-        return (
-            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                <Tooltip title="Add">
-                    <IconButton
-                        onClick={() => {
-                            handleCreateOpen();
-                        }}
-                        color="primary"
-                        size="small"
-                        disableRipple
-                        style={{ backgroundColor: '#E3F2FD', margin: 2 }}
-                    >
-                        <IconPlus />
-                    </IconButton>
-                </Tooltip>
-                <OutlineInputStyle
-                    id="input-search-header"
-                    value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    placeholder="Search"
-                    startAdornment={
-                        <InputAdornment position="start">
-                            <IconSearch stroke={1.5} size="1rem" color={theme.palette.grey[500]} />
-                        </InputAdornment>
-                    }
-                    endAdornment={
-                        <InputAdornment position="end">
-                            <ButtonBase sx={{ borderRadius: '12px' }}>
-                                <HeaderAvatarStyle variant="rounded">
-                                    <IconAdjustmentsHorizontal stroke={1.5} size="1.3rem" />
-                                </HeaderAvatarStyle>
-                            </ButtonBase>
-                        </InputAdornment>
-                    }
-                    aria-describedby="search-helper-text"
-                    inputProps={{ 'aria-label': 'weight' }}
-                />
-            </Box>
-        );
-    };
+    const AddSection = () => (
+        <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+            <Tooltip title="Add">
+                <IconButton
+                    onClick={() => {
+                        handleCreateOpen();
+                    }}
+                    color="primary"
+                    size="small"
+                    disableRipple
+                    style={{ backgroundColor: '#E3F2FD', margin: 2 }}
+                >
+                    <IconPlus />
+                </IconButton>
+            </Tooltip>
+        </Box>
+    );
 
     const columns = [
         {
-            name: 'ID Number',
-            selector: (row) => row.employeeNumber
+            label: 'ID Number',
+            name: 'employeeNumber'
         },
         {
-            name: 'Name',
-            selector: (row) => row.employeeName
+            label: 'Name',
+            name: 'employeeName'
         },
         {
-            name: 'Email',
-            selector: (row) => row.employeeEmail
+            label: 'Email',
+            name: 'employeeEmail'
         },
         {
-            name: 'Phone Number',
-            selector: (row) => row.employeePhoneNumber
-        },
-        {
-            name: 'Division',
-            selector: (row) => row.division.divisionName
+            label: 'Phone Number',
+            name: 'employeePhoneNumber'
         },
         {
             name: 'Action',
-            width: '200px',
-            selector: (row) => actions(row)
+            options: {
+                customBodyRenderLite: (dataIndex, rowIndex) => actions(rowIndex)
+            }
         }
     ];
 
+    const options = {
+        download: false,
+        filter: false,
+        print: false,
+        selectableRowsHeader: false,
+        selectableRowsHideCheckboxes: true
+    };
+
     return (
-        <MainCard title="Employee" secondary={<SearchSection />}>
-            <DataTable columns={columns} data={data} responsive="true" pagination />
+        <MainCard title="Employee" secondary={<AddSection />}>
+            <MUIDataTable columns={columns} data={data} options={options} />
             <Modal
                 id="detail"
                 open={detailOpen}
@@ -453,9 +450,9 @@ const Employee = () => {
                             <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
                                 <ListItem>
                                     <ListItemAvatar>
-                                        <Avatar>
+                                        <IconButton color="secondary" size="medium" disableRipple style={{ backgroundColor: '#EDE7F6' }}>
                                             <IconId />
-                                        </Avatar>
+                                        </IconButton>
                                     </ListItemAvatar>
                                     <ListItemText
                                         primary="ID Number"
@@ -464,17 +461,17 @@ const Employee = () => {
                                 </ListItem>
                                 <ListItem>
                                     <ListItemAvatar>
-                                        <Avatar>
+                                        <IconButton color="secondary" size="medium" disableRipple style={{ backgroundColor: '#EDE7F6' }}>
                                             <IconMail />
-                                        </Avatar>
+                                        </IconButton>
                                     </ListItemAvatar>
                                     <ListItemText primary="Email" secondary={item.employeeEmail === null ? '-' : item.employeeEmail} />
                                 </ListItem>
                                 <ListItem>
                                     <ListItemAvatar>
-                                        <Avatar>
+                                        <IconButton color="secondary" size="medium" disableRipple style={{ backgroundColor: '#EDE7F6' }}>
                                             <IconPhone />
-                                        </Avatar>
+                                        </IconButton>
                                     </ListItemAvatar>
                                     <ListItemText
                                         primary="Phone Number"
@@ -483,13 +480,24 @@ const Employee = () => {
                                 </ListItem>
                                 <ListItem>
                                     <ListItemAvatar>
-                                        <Avatar>
+                                        <IconButton color="secondary" size="medium" disableRipple style={{ backgroundColor: '#EDE7F6' }}>
                                             <IconBuildingSkyscraper />
-                                        </Avatar>
+                                        </IconButton>
                                     </ListItemAvatar>
                                     <ListItemText
                                         primary="Address"
                                         secondary={item.employeeAddress === null ? '-' : item.employeeAddress}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemAvatar>
+                                        <IconButton color="secondary" size="medium" disableRipple style={{ backgroundColor: '#EDE7F6' }}>
+                                            <IconBuildingSkyscraper />
+                                        </IconButton>
+                                    </ListItemAvatar>
+                                    <ListItemText
+                                        primary="Division"
+                                        secondary={item.jobTitle?.division === null ? '-' : item.jobTitle?.division?.divisionName}
                                     />
                                 </ListItem>
                             </List>
@@ -498,17 +506,20 @@ const Employee = () => {
                             <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
                                 <ListItem>
                                     <ListItemAvatar>
-                                        <Avatar>
+                                        <IconButton color="secondary" size="medium" disableRipple style={{ backgroundColor: '#EDE7F6' }}>
                                             <IconUsers />
-                                        </Avatar>
+                                        </IconButton>
                                     </ListItemAvatar>
-                                    <ListItemText primary="Gender" secondary={item.employeeGender === null ? '-' : item.employeeGender} />
+                                    <ListItemText
+                                        primary="Gender"
+                                        secondary={item.employeeGender === null ? '-' : gender[item.employeeGender]}
+                                    />
                                 </ListItem>
                                 <ListItem>
                                     <ListItemAvatar>
-                                        <Avatar>
+                                        <IconButton color="secondary" size="medium" disableRipple style={{ backgroundColor: '#EDE7F6' }}>
                                             <IconCalendar />
-                                        </Avatar>
+                                        </IconButton>
                                     </ListItemAvatar>
                                     <ListItemText
                                         primary="Birth Date"
@@ -523,13 +534,24 @@ const Employee = () => {
                                 </ListItem>
                                 <ListItem>
                                     <ListItemAvatar>
-                                        <Avatar>
+                                        <IconButton color="secondary" size="medium" disableRipple style={{ backgroundColor: '#EDE7F6' }}>
                                             <IconMap />
-                                        </Avatar>
+                                        </IconButton>
                                     </ListItemAvatar>
                                     <ListItemText
                                         primary="Birth Place"
                                         secondary={item.employeeBirthplace === null ? '-' : item.employeeBirthplace}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemAvatar>
+                                        <IconButton color="secondary" size="medium" disableRipple style={{ backgroundColor: '#EDE7F6' }}>
+                                            <IconBriefcase />
+                                        </IconButton>
+                                    </ListItemAvatar>
+                                    <ListItemText
+                                        primary="Job Title"
+                                        secondary={item.jobTitle === null ? '-' : item.jobTitle?.jobTitleName}
                                     />
                                 </ListItem>
                             </List>
@@ -557,6 +579,7 @@ const Employee = () => {
                             employeePhoneNumber: '',
                             isSupervisor: false,
                             divisionId: '',
+                            jobTitleId: '',
                             submit: null
                         }}
                         validationSchema={Yup.object().shape({
@@ -802,7 +825,10 @@ const Employee = () => {
                                                 name="divisionId"
                                                 label="Division*"
                                                 onBlur={handleBlur}
-                                                onChange={handleChange}
+                                                onChange={(event) => {
+                                                    handleChange(event);
+                                                    getJobTitleListData(event.target.value);
+                                                }}
                                                 inputProps={{}}
                                             >
                                                 {division.map((item, index) => (
@@ -814,6 +840,33 @@ const Employee = () => {
                                             {touched.divisionId && errors.divisionId && (
                                                 <FormHelperText error id="standard-weight-helper-text-division-id">
                                                     {errors.divisionId}
+                                                </FormHelperText>
+                                            )}
+                                        </FormControl>
+                                        <FormControl
+                                            fullWidth
+                                            error={Boolean(touched.jobTitleId && errors.jobTitleId)}
+                                            style={{ marginBottom: 18 }}
+                                        >
+                                            <InputLabel htmlFor="job-title-id">Job Title*</InputLabel>
+                                            <Select
+                                                id="job-title-id"
+                                                value={values.jobTitleId}
+                                                name="jobTitleId"
+                                                label="Job Title*"
+                                                onBlur={handleBlur}
+                                                onChange={handleChange}
+                                                inputProps={{}}
+                                            >
+                                                {jobTitle.map((item, index) => (
+                                                    <MenuItem id={item.jobTitleId} value={item.jobTitleId}>
+                                                        {item.jobTitleName}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                            {touched.jobTitleName && errors.jobTitleName && (
+                                                <FormHelperText error id="standard-weight-helper-text-division-id">
+                                                    {errors.jobTitleName}
                                                 </FormHelperText>
                                             )}
                                         </FormControl>
@@ -926,7 +979,8 @@ const Employee = () => {
                             employeeEmail: item.employeeEmail,
                             employeePhoneNumber: item.employeePhoneNumber,
                             isSupervisor: item.isSupervisor === 1,
-                            divisionId: item.division?.divisionId
+                            divisionId: item.jobTitle?.division?.divisionId,
+                            jobTitleId: item.jobTitle?.jobTitleId
                         }}
                         validationSchema={Yup.object().shape({
                             employeeName: Yup.string().max(255).required('Employee Name is required'),
@@ -953,7 +1007,8 @@ const Employee = () => {
                                     employeeEmail: values.employeeEmail,
                                     employeePhoneNumber: values.employeePhoneNumber,
                                     isSupervisor: values.isSupervisor ? 1 : 0,
-                                    divisionId: values.divisionId
+                                    divisionId: values.divisionId,
+                                    jobTitleId: values.jobTitleId
                                 };
                                 axios
                                     .put(`${config.baseUrl}absence/employee/update/${item.employeeId}`, body, {
@@ -1169,7 +1224,10 @@ const Employee = () => {
                                                 name="divisionId"
                                                 label="Division*"
                                                 onBlur={handleBlur}
-                                                onChange={handleChange}
+                                                onChange={(event) => {
+                                                    handleChange(event);
+                                                    getJobTitleListData(event.target.value);
+                                                }}
                                                 inputProps={{}}
                                             >
                                                 {division.map((item, index) => (
@@ -1181,6 +1239,33 @@ const Employee = () => {
                                             {touched.divisionId && errors.divisionId && (
                                                 <FormHelperText error id="standard-weight-helper-text-division-id">
                                                     {errors.divisionId}
+                                                </FormHelperText>
+                                            )}
+                                        </FormControl>
+                                        <FormControl
+                                            fullWidth
+                                            error={Boolean(touched.jobTitleId && errors.jobTitleId)}
+                                            style={{ marginBottom: 18 }}
+                                        >
+                                            <InputLabel htmlFor="job-title-id">Job Title*</InputLabel>
+                                            <Select
+                                                id="job-title-id"
+                                                value={values.jobTitleId}
+                                                name="jobTitleId"
+                                                label="Job Title*"
+                                                onBlur={handleBlur}
+                                                onChange={handleChange}
+                                                inputProps={{}}
+                                            >
+                                                {jobTitle.map((item, index) => (
+                                                    <MenuItem id={item.jobTitleId} value={item.jobTitleId}>
+                                                        {item.jobTitleName}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                            {touched.jobTitleName && errors.jobTitleName && (
+                                                <FormHelperText error id="standard-weight-helper-text-division-id">
+                                                    {errors.jobTitleName}
                                                 </FormHelperText>
                                             )}
                                         </FormControl>

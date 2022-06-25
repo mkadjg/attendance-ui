@@ -347,7 +347,6 @@ const FormSick = () => {
                                                     value={startDate}
                                                     onChange={(newValue) => {
                                                         setStartDate(newValue);
-                                                        setEndDate(newValue);
                                                     }}
                                                     minDate={new Date()}
                                                     renderInput={(params) => <TextField {...params} />}
