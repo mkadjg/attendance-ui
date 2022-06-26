@@ -45,7 +45,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 // ============================|| FIREBASE - LOGIN ||============================ //
 
-const ValidateOtp = () => {
+const NewPassword = () => {
     const theme = useTheme();
     const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
     const scriptedRef = useScriptRef();
@@ -307,4 +307,4 @@ const ValidateOtp = () => {
     );
 };
 
-export default ValidateOtp;
+export default NewPassword;

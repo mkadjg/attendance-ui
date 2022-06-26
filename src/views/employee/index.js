@@ -379,7 +379,8 @@ const Employee = () => {
         filter: false,
         print: false,
         selectableRowsHeader: false,
-        selectableRowsHideCheckboxes: true
+        selectableRowsHideCheckboxes: true,
+        elevation: 0
     };
 
     return (
