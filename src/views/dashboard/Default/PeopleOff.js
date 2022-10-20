@@ -107,12 +107,19 @@ const PeopleOff = ({ isLoading, peopleOff }) => {
                                                 <Typography variant="subtitle-1">{item.employee.employeeName}</Typography>
                                             </Grid>
                                             <Grid item xs={3}>
-                                                <Typography variant="subtitle-1">{item.division.divisionName}</Typography>
+                                                <Typography variant="subtitle-1">{item.employee.jobTitle.division.divisionName}</Typography>
                                             </Grid>
                                             <Grid item xs={4}>
-                                                <Typography variant="subtitle-1">
-                                                    <td dangerouslySetInnerHTML={{ __html: item.descriptionHtml }} />
-                                                </Typography>
+                                                {item.attendanceType.attendanceTypeName === 'Sick' && (
+                                                    <Typography variant="subtitle-1">
+                                                        <td dangerouslySetInnerHTML={{ __html: item.sick.descriptionHtml }} />
+                                                    </Typography>
+                                                )}
+                                                {item.attendanceType.attendanceTypeName === 'Leave' && (
+                                                    <Typography variant="subtitle-1">
+                                                        <td dangerouslySetInnerHTML={{ __html: item.leaveSubmission.descriptionHtml }} />
+                                                    </Typography>
+                                                )}
                                             </Grid>
                                             <Grid item xs={1}>
                                                 {item.attendanceType.attendanceTypeName === 'Sick' && (

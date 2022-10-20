@@ -5,7 +5,7 @@ const config = {
     defaultPath: '/dashboard',
     fontFamily: `'Roboto', sans-serif`,
     borderRadius: 12,
-    baseUrl: 'http://localhost:8085/'
+    baseUrl: 'http://localhost:8081/'
 };
 
 export default config;

@@ -109,9 +109,6 @@ const ProfileSection = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const [sdm, setSdm] = useState(true);
-    const [value, setValue] = useState('');
-    const [notification, setNotification] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const [open, setOpen] = useState(false);
     const [cookies, setCookies, removeCookies] = useCookies();
@@ -134,7 +131,7 @@ const ProfileSection = () => {
 
     const handleLogout = async () => {
         axios
-            .get(`${config.baseUrl}auth/user/logout`, {
+            .get(`${config.baseUrl}auth/logout`, {
                 headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': cookies.userId }
             })
             .catch((error) => {
@@ -242,7 +239,7 @@ const ProfileSection = () => {
                 }}
                 icon={
                     <Avatar
-                        src={`data:image/jpeg;image/png;image/jpg;base64,${localStorage.getItem('photo')}`}
+                        src={`data:image/jpeg;image/png;image/jpg;image/jpeg;base64,${sessionStorage.getItem('photo')}`}
                         sx={{
                             ...theme.typography.mediumAvatar,
                             margin: '8px 0 8px 8px !important',
@@ -387,7 +384,57 @@ const ProfileSection = () => {
                             verifyPassword: ''
                         }}
                         validationSchema={Yup.object().shape({})}
-                        onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {}}
+                        onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+                            try {
+                                setDisableSubmit(true);
+                                const body = {
+                                    email: cookies.username,
+                                    oldPassword: values.oldPassword,
+                                    newPassword: values.newPassword
+                                };
+
+                                if (values.newPassword !== values.verifyPassword) {
+                                    setResponseStatus('warning');
+                                    setResponseMessage('Password doesnt match!');
+                                    setSnackbarOpen(true);
+                                    setDisableSubmit(false);
+                                } else {
+                                    axios
+                                        .post(`${config.baseUrl}auth/change-password`, body, {
+                                            headers: { Authorization: `Bearer ${cookies.token}`, 'user-audit-id': cookies.userId }
+                                        })
+                                        .then((response) => {
+                                            if (response.status) {
+                                                setResponseStatus(response.data.status);
+                                                setResponseMessage(response.data.message);
+                                                handleChangePasswordClose();
+                                                setSnackbarOpen(true);
+                                                setDisableSubmit(false);
+                                            } else {
+                                                setResponseStatus(response.status);
+                                                setResponseMessage(response.message);
+                                                handleChangePasswordClose();
+                                                setSnackbarOpen(true);
+                                                setDisableSubmit(false);
+                                            }
+                                        })
+                                        .catch((error) => {
+                                            setResponseStatus('error');
+                                            setResponseMessage('Oops Internal Server Error!');
+                                            handleChangePasswordClose();
+                                            setDisableSubmit(false);
+                                            setSnackbarOpen(true);
+                                            setDisableSubmit(false);
+                                        });
+                                }
+                            } catch (err) {
+                                setResponseStatus('error');
+                                setResponseMessage('Oops Internal Server Error!');
+                                handleChangePasswordClose();
+                                setSnackbarOpen(true);
+                                setDisableSubmit(false);
+                            }
+                        }}
                     >
                         {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => (
                             <form noValidate onSubmit={handleSubmit}>

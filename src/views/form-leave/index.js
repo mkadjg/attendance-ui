@@ -192,7 +192,7 @@ const FormLeave = () => {
 
     const getSubPartner = () => {
         axios
-            .get(`${config.baseUrl}absence/employee/partner?employeeId=${employeeId}&divisionId=${divisionId}`, {
+            .get(`${config.baseUrl}absence/partner/?employeeId=${employeeId}&divisionId=${divisionId}`, {
                 headers: { Authorization: `Bearer ${cookies.token}` }
             })
             .catch((error) => {

@@ -608,7 +608,8 @@ const Employee = () => {
                                     employeeEmail: values.employeeEmail,
                                     employeePhoneNumber: values.employeePhoneNumber,
                                     isSupervisor: values.isSupervisor ? 1 : 0,
-                                    divisionId: values.divisionId
+                                    divisionId: values.divisionId,
+                                    jobTitleId: values.jobTitleId
                                 };
                                 axios
                                     .post(`${config.baseUrl}auth/employee/register`, body, {
@@ -638,8 +639,8 @@ const Employee = () => {
                                             getListData();
                                             setDisableSubmit(false);
                                         } else {
-                                            setResponseStatus('error');
-                                            setResponseMessage('Oops Internal Server Error!');
+                                            setResponseStatus(response.status);
+                                            setResponseMessage(response.message);
                                             setSnackbarOpen(true);
                                             handleCreateClose();
                                             setDisableSubmit(false);

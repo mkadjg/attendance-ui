@@ -371,12 +371,12 @@ const LeaveApprovalSupervisor = () => {
                             <Grid container spacing={1} alignContent="center" alignItems="center">
                                 <Grid item xs={2}>
                                     <Typography variant="subtitle-1" fontWeight={800}>
-                                        Start Date
+                                        Date
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={2}>
                                     <Typography variant="subtitle-1" fontWeight={800}>
-                                        End Date
+                                        Employee
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={2}>
@@ -413,9 +413,13 @@ const LeaveApprovalSupervisor = () => {
                                     <Grid sx={paperBody} container spacing={1} alignContent="center" alignItems="center">
                                         <Grid item xs={2}>
                                             <Typography variant="subtitle-1">{moment(item.startDate).format('LL')}</Typography>
+                                            <br />
+                                            until
+                                            <br />
+                                            <Typography variant="subtitle-1">{moment(item.endDate).format('LL')}</Typography>
                                         </Grid>
                                         <Grid item xs={2}>
-                                            <Typography variant="subtitle-1">{moment(item.endDate).format('LL')}</Typography>
+                                            <Typography variant="subtitle-1">{item.employeeName}</Typography>
                                         </Grid>
                                         <Grid item xs={2}>
                                             <Typography variant="subtitle-1">

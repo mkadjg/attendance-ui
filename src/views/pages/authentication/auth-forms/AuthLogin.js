@@ -81,7 +81,7 @@ const FirebaseLogin = ({ ...others }) => {
                             password: values.password
                         };
                         axios
-                            .post(`${config.baseUrl}auth/user/login`, body)
+                            .post(`${config.baseUrl}auth/login`, body)
                             .then((response) => {
                                 setDisableSubmit(false);
                                 if (response.status) {
